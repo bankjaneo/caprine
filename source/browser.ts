@@ -293,21 +293,23 @@ ipc.answerMain('reload', () => {
 	location.reload();
 });
 
+// Cache the dark mode state to avoid expensive @electron/remote sync IPC on every DOM mutation
+let cachedShouldUseDarkColors = Boolean(nativeTheme.shouldUseDarkColors);
+
 async function setTheme(): Promise<void> {
-	type ThemeSource = typeof nativeTheme.themeSource;
-	const theme = await ipc.callMain<undefined, ThemeSource>('get-config-theme');
-	nativeTheme.themeSource = theme;
+	// Note: Don't set nativeTheme.themeSource here - it triggers nativeTheme.on('updated')
+	// in the main process which causes an infinite loop. The main process handles that.
+	cachedShouldUseDarkColors = Boolean(nativeTheme.shouldUseDarkColors);
 	setThemeElement(document.documentElement);
 	updateVibrancy();
 }
 
 function setThemeElement(element: HTMLElement): void {
-	const useDarkColors = Boolean(nativeTheme.shouldUseDarkColors);
-	element.classList.toggle('dark-mode', useDarkColors);
-	element.classList.toggle('light-mode', !useDarkColors);
-	element.classList.toggle('__fb-dark-mode', useDarkColors);
-	element.classList.toggle('__fb-light-mode', !useDarkColors);
-	removeThemeClasses(useDarkColors);
+	element.classList.toggle('dark-mode', cachedShouldUseDarkColors);
+	element.classList.toggle('light-mode', !cachedShouldUseDarkColors);
+	element.classList.toggle('__fb-dark-mode', cachedShouldUseDarkColors);
+	element.classList.toggle('__fb-light-mode', !cachedShouldUseDarkColors);
+	removeThemeClasses(cachedShouldUseDarkColors);
 }
 
 function removeThemeClasses(useDarkColors: boolean): void {
@@ -331,7 +333,7 @@ async function observeTheme(): Promise<void> {
 			return classList.contains('dark-mode') && classList.contains('__fb-dark-mode');
 		});
 		// If config and class list don't match, update class list
-		if (nativeTheme.shouldUseDarkColors !== isDark) {
+		if (cachedShouldUseDarkColors !== isDark) {
 			setTheme();
 		}
 	});
@@ -345,7 +347,7 @@ async function observeTheme(): Promise<void> {
 			for (const newNode of nodeRecord.addedNodes) {
 				const {classList} = (newNode as HTMLElement);
 				const isLight = classList.contains('light-mode') || classList.contains('__fb-light-mode');
-				if (nativeTheme.shouldUseDarkColors === isLight) {
+				if (cachedShouldUseDarkColors === isLight) {
 					setThemeElement(newNode as HTMLElement);
 				}
 			}
@@ -394,7 +396,9 @@ async function updateVibrancy(): Promise<void> {
 		default:
 	}
 
-	ipc.callMain('set-vibrancy');
+	if (is.macos) {
+		ipc.callMain('set-vibrancy');
+	}
 }
 
 async function updateSidebar(): Promise<void> {
@@ -743,11 +747,11 @@ async function observeAutoscroll(): Promise<void> {
 
 async function observeThemeBugs(): Promise<void> {
 	const rootObserver = new MutationObserver((record: MutationRecord[]) => {
-		const newNodes: MutationRecord[] = record
-			.filter(record => record.addedNodes.length > 0 || record.removedNodes.length > 0);
+		const hasNewNodes = record
+			.some(record => record.addedNodes.length > 0 || record.removedNodes.length > 0);
 
-		if (newNodes) {
-			removeThemeClasses(Boolean(nativeTheme.shouldUseDarkColors));
+		if (hasNewNodes) {
+			removeThemeClasses(cachedShouldUseDarkColors);
 		}
 	});
 
@@ -800,6 +804,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 	// Hook broken dark mode observer
 	observeThemeBugs();
+
+	// Inject a transparent drag bar at the top of the window on macOS.
+	// This is needed because Facebook's JS event handlers on child elements
+	// prevent -webkit-app-region: drag from working when the window is focused.
+	// The drag bar sits above all web content and handles window dragging.
+	// On mousemove, we toggle pointer-events to allow clicking interactive
+	// elements (buttons, links) underneath while keeping empty space draggable.
+	if (is.macos) {
+		const dragBarHeight = 48;
+		const dragBar = document.createElement('div');
+		dragBar.id = 'caprine-drag-bar';
+		dragBar.style.position = 'fixed';
+		dragBar.style.top = '0';
+		dragBar.style.left = '0';
+		dragBar.style.right = '0';
+		dragBar.style.height = `${dragBarHeight}px`;
+		dragBar.style.zIndex = '99999';
+		dragBar.style.setProperty('-webkit-app-region', 'drag');
+		document.body.append(dragBar);
+
+		const interactiveSelector = 'button, a[href], input, select, textarea, [role="button"], [role="link"], [role="search"], [contenteditable="true"]';
+
+		// Debounce mousemove to reduce CPU usage - only process every 100ms
+		let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+		let lastMouseX = 0;
+		let lastMouseY = 0;
+		document.addEventListener('mousemove', (event: MouseEvent) => {
+			lastMouseX = event.clientX;
+			lastMouseY = event.clientY;
+
+			if (debounceTimer) {
+				return;
+			}
+
+			debounceTimer = setTimeout(() => {
+				debounceTimer = undefined;
+
+				if (lastMouseY >= dragBarHeight) {
+					dragBar.style.pointerEvents = '';
+					return;
+				}
+
+				// Temporarily hide drag bar to find what's underneath
+				dragBar.style.pointerEvents = 'none';
+				const target = document.elementFromPoint(lastMouseX, lastMouseY);
+
+				if (target?.closest(interactiveSelector)) {
+					// Over an interactive element - keep drag bar transparent for clicks
+					return;
+				}
+
+				// Over empty space - re-enable drag bar for window dragging
+				dragBar.style.pointerEvents = '';
+			}, 100);
+		}, {passive: true});
+	}
 });
 
 // Handle title bar double-click.

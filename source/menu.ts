@@ -6,6 +6,7 @@ import {
 	Menu,
 	MenuItemConstructorOptions,
 	dialog,
+	nativeTheme,
 } from 'electron';
 import {
 	is,
@@ -114,6 +115,7 @@ export default async function updateMenu(): Promise<Menu> {
 			checked: config.get('theme') === 'system',
 			async click() {
 				config.set('theme', 'system');
+				nativeTheme.themeSource = 'system';
 				sendAction('set-theme');
 				await updateMenu();
 			},
@@ -124,6 +126,7 @@ export default async function updateMenu(): Promise<Menu> {
 			checked: config.get('theme') === 'light',
 			async click() {
 				config.set('theme', 'light');
+				nativeTheme.themeSource = 'light';
 				sendAction('set-theme');
 				await updateMenu();
 			},
@@ -134,6 +137,7 @@ export default async function updateMenu(): Promise<Menu> {
 			checked: config.get('theme') === 'dark',
 			async click() {
 				config.set('theme', 'dark');
+				nativeTheme.themeSource = 'dark';
 				sendAction('set-theme');
 				await updateMenu();
 			},

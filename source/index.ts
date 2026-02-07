@@ -1,4 +1,5 @@
 import path from 'node:path';
+import process from 'node:process';
 import {readFileSync, existsSync} from 'node:fs';
 import {
 	app,
@@ -19,7 +20,7 @@ import electronDl from 'electron-dl';
 import electronContextMenu from 'electron-context-menu';
 import electronLocalshortcut from 'electron-localshortcut';
 import electronDebug from 'electron-debug';
-import {is, darkMode} from 'electron-util';
+import {is} from 'electron-util';
 import {bestFacebookLocaleFor} from 'facebook-locales';
 import doNotDisturb from '@sindresorhus/do-not-disturb';
 import updateAppMenu from './menu';
@@ -81,19 +82,88 @@ let isQuitting = false;
 let previousMessageCount = 0;
 let dockMenu: Menu;
 let isDNDEnabled = false;
+let currentConversations: Conversation[] = [];
+let jumpListUpdateTimer: ReturnType<typeof setTimeout> | undefined;
+
+function updateWindowsJumpList(): void {
+	if (!is.windows || currentConversations.length === 0) {
+		return;
+	}
+
+	const jumpListItems = currentConversations
+		.filter(({label}) => label && label.trim().length > 0)
+		.slice(0, 5)
+		.map((conversation, index) => ({
+			type: 'task' as const,
+			title: conversation.label,
+			program: process.execPath,
+			args: `--jump-to-conversation=${index + 1}`,
+			description: `Open conversation with ${conversation.label}`,
+			iconPath: '',
+			iconIndex: 0,
+		}));
+
+	const result = app.setJumpList([
+		{
+			type: 'custom',
+			name: 'Conversations',
+			items: jumpListItems,
+		},
+	]);
+
+	if (result !== 'ok') {
+		console.error('Failed to update Jump List:', result);
+	}
+}
+
+function scheduleJumpListUpdate(): void {
+	if (jumpListUpdateTimer) {
+		return;
+	}
+
+	jumpListUpdateTimer = setTimeout(() => {
+		jumpListUpdateTimer = undefined;
+		updateWindowsJumpList();
+	}, 5000);
+}
+
+function clearWindowsJumpList(): void {
+	if (is.windows) {
+		if (jumpListUpdateTimer) {
+			clearTimeout(jumpListUpdateTimer);
+			jumpListUpdateTimer = undefined;
+		}
+
+		app.setJumpList(null);
+	}
+}
 
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
 }
 
-app.on('second-instance', () => {
+app.on('second-instance', (_, argv) => {
 	if (mainWindow) {
 		if (mainWindow.isMinimized()) {
 			mainWindow.restore();
 		}
 
 		mainWindow.show();
+
+		// Parse Jump List args and jump to conversation if specified
+		const jumpArgument = argv.find(argument => argument.startsWith('--jump-to-conversation='));
+		if (jumpArgument) {
+			const index = Number.parseInt(jumpArgument.split('=')[1], 10);
+			if (!Number.isNaN(index)) {
+				sendAction('jump-to-conversation', index);
+			}
+		}
 	}
+});
+
+// Clear Windows Jump List when app quits
+app.on('before-quit', () => {
+	clearWindowsJumpList();
 });
 
 // Preserves the window position when a display is removed and Caprine is moved to a different screen.
@@ -298,13 +368,25 @@ function createMainWindow(): BrowserWindow {
 	setUserLocale();
 	initRequestsFiltering();
 
-	let previousDarkMode = darkMode.isEnabled;
-	darkMode.onChange(() => {
-		if (darkMode.isEnabled !== previousDarkMode) {
-			previousDarkMode = darkMode.isEnabled;
-			win.webContents.send('set-theme');
-		}
+	// Listen for native theme changes and notify renderer
+	// Use setImmediate to defer the call on Windows because the event fires
+	// before nativeTheme.shouldUseDarkColors is updated
+	const onThemeUpdated = (): void => {
+		setImmediate(() => {
+			if (!win.isDestroyed()) {
+				ipc.callRenderer(win, 'set-theme');
+			}
+		});
+	};
+
+	nativeTheme.on('updated', onThemeUpdated);
+
+	win.on('closed', () => {
+		nativeTheme.off('updated', onThemeUpdated);
 	});
+
+	// Set initial theme based on config
+	nativeTheme.themeSource = config.get('theme');
 
 	if (is.macos) {
 		win.setSheetOffset(40);
@@ -370,6 +452,17 @@ function createMainWindow(): BrowserWindow {
 	await updateAppMenu();
 	mainWindow = createMainWindow();
 
+	// Handle Jump List args when app launches on Windows
+	if (is.windows) {
+		const jumpArgument = process.argv.find(argument => argument.startsWith('--jump-to-conversation='));
+		if (jumpArgument) {
+			const index = Number.parseInt(jumpArgument.split('=')[1], 10);
+			if (!Number.isNaN(index)) {
+				sendAction('jump-to-conversation', index);
+			}
+		}
+	}
+
 	// Workaround for https://github.com/electron/electron/issues/5256
 	electronLocalshortcut.register(mainWindow, 'CommandOrControl+=', () => {
 		sendAction('zoom-in');
@@ -377,6 +470,36 @@ function createMainWindow(): BrowserWindow {
 
 	// Start in menu bar mode if enabled, otherwise start normally
 	setUpMenuBarMode(mainWindow);
+
+	// Handle conversations for both macOS dock menu and Windows Jump List
+	ipc.answerRenderer('conversations', (conversations: Conversation[]) => {
+		if (conversations.length === 0) {
+			return;
+		}
+
+		// Store conversations for Windows Jump List
+		currentConversations = conversations;
+
+		// Debounce Windows Jump List updates to avoid excessive Shell API calls
+		scheduleJumpListUpdate();
+
+		// Update macOS dock menu
+		if (is.macos) {
+			// Filter out conversations with empty labels to avoid blank menu items
+			const validConversations = conversations.filter(({label}) => label && label.trim().length > 0);
+
+			const items = validConversations.map(({label, icon}, index) => ({
+				label: `${label}`,
+				icon: nativeImage.createFromDataURL(icon),
+				click() {
+					mainWindow.show();
+					sendAction('jump-to-conversation', index + 1);
+				},
+			}));
+
+			app.dock.setMenu(Menu.buildFromTemplate([dockMenu.items[0], {type: 'separator'}, ...items]));
+		}
+	});
 
 	if (is.macos) {
 		const firstItem: MenuItemConstructorOptions = {
@@ -401,23 +524,6 @@ function createMainWindow(): BrowserWindow {
 			// Messenger sorts the conversations by unread state.
 			// We select the first conversation from the list.
 			sendAction('jump-to-conversation', 1);
-		});
-
-		ipc.answerRenderer('conversations', (conversations: Conversation[]) => {
-			if (conversations.length === 0) {
-				return;
-			}
-
-			const items = conversations.map(({label, icon}, index) => ({
-				label: `${label}`,
-				icon: nativeImage.createFromDataURL(icon),
-				click() {
-					mainWindow.show();
-					sendAction('jump-to-conversation', index + 1);
-				},
-			}));
-
-			app.dock.setMenu(Menu.buildFromTemplate([firstItem, {type: 'separator'}, ...items]));
 		});
 	}
 
