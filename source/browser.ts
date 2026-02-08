@@ -812,7 +812,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// On mousemove, we toggle pointer-events to allow clicking interactive
 	// elements (buttons, links) underneath while keeping empty space draggable.
 	if (is.macos) {
-		const dragBarHeight = 48;
+		const dragBarHeight = 24;
 		const dragBar = document.createElement('div');
 		dragBar.id = 'caprine-drag-bar';
 		dragBar.style.position = 'fixed';
