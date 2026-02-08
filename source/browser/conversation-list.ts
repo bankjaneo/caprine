@@ -327,7 +327,9 @@ window.addEventListener('load', async () => {
 	const leftSidebar = await elementReady(`${selectors.leftSidebar}:has(${selectors.chatsIcon})`, {stopOnDomReady: false});
 
 	if (sidebar) {
-		const conversationListObserver = new MutationObserver(async () => sendConversationList());
+		const conversationListObserver = new MutationObserver(async () => {
+			sendConversationList();
+		});
 		const conversationCountObserver = new MutationObserver(countUnread);
 
 		conversationListObserver.observe(sidebar, {
