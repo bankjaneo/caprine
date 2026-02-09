@@ -8,6 +8,8 @@ import {toggleVideoAutoplay} from './autoplay';
 import {sendConversationList} from './browser/conversation-list';
 import {IToggleSounds} from './types';
 
+type ThemeSource = typeof nativeTheme.themeSource;
+
 async function withMenu(
 	menuButtonElement: HTMLElement,
 	callback: () => Promise<void> | void,
@@ -294,9 +296,12 @@ ipc.answerMain('reload', () => {
 });
 
 async function setTheme(): Promise<void> {
-	type ThemeSource = typeof nativeTheme.themeSource;
 	const theme = await ipc.callMain<undefined, ThemeSource>('get-config-theme');
-	nativeTheme.themeSource = theme;
+
+	if (nativeTheme.themeSource !== theme) {
+		nativeTheme.themeSource = theme;
+	}
+
 	setThemeElement(document.documentElement);
 	updateVibrancy();
 }
@@ -321,6 +326,9 @@ function removeThemeClasses(useDarkColors: boolean): void {
 }
 
 async function observeTheme(): Promise<void> {
+	/* Listen for native theme changes (e.g., OS theme change when themeSource is 'system') */
+	nativeTheme.on('updated', setTheme);
+
 	/* Main document's class list */
 	const observer = new MutationObserver((records: MutationRecord[]) => {
 		// Find records that had class attribute changed
