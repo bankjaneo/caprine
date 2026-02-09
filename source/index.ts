@@ -12,8 +12,7 @@ import {
  	MenuItemConstructorOptions,
  	systemPreferences,
  	nativeTheme,
- } from 'electron';
-import {Task} from 'electron';
+} from 'electron';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -372,7 +371,7 @@ function createMainWindow(): BrowserWindow {
 	mainWindow = createMainWindow();
 
 	if (is.windows) {
-		const jumpToConversationMatch = process.argv.find(arg => /^--jump-to-conversation=\d+$/.test(arg));
+		const jumpToConversationMatch = process.argv.find(argument => /^--jump-to-conversation=\d+$/.test(argument));
 		if (jumpToConversationMatch) {
 			const conversationIndex = Number.parseInt(jumpToConversationMatch.split('=')[1], 10);
 			await ipc.callRenderer(mainWindow, 'jump-to-conversation', conversationIndex);
@@ -433,21 +432,28 @@ function createMainWindow(): BrowserWindow {
 	if (is.windows) {
 		ipc.answerRenderer('conversations', (conversations: Conversation[]) => {
 			if (conversations.length === 0) {
-				app.setUserTasks([]);
+				app.setJumpList([]);
 				return;
 			}
 
 			const recentConversations = conversations.slice(0, 10);
-			const tasks: Task[] = recentConversations.map(({label}, index) => ({
+			const tasks = recentConversations.map(({label}, index) => ({
+				type: 'task' as const,
+				title: label,
 				program: process.execPath,
-				arguments: '--jump-to-conversation=' + (index + 1),
+				args: '--jump-to-conversation=' + (index + 1),
 				iconPath: caprineIconPath,
 				iconIndex: 0,
-				title: label,
 				description: `Open ${label}`,
 			}));
 
-			app.setUserTasks(tasks);
+			app.setJumpList([
+				{
+					type: 'custom',
+					name: 'Conversations',
+					items: tasks,
+				},
+			]);
 		});
 	}
 
