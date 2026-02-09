@@ -1,18 +1,19 @@
 import path from 'node:path';
 import {readFileSync, existsSync} from 'node:fs';
 import {
-	app,
-	nativeImage,
-	screen as electronScreen,
-	session,
-	shell,
-	BrowserWindow,
-	Menu,
-	Notification,
-	MenuItemConstructorOptions,
-	systemPreferences,
-	nativeTheme,
-} from 'electron';
+ 	app,
+ 	nativeImage,
+ 	screen as electronScreen,
+ 	session,
+ 	shell,
+ 	BrowserWindow,
+ 	Menu,
+ 	Notification,
+ 	MenuItemConstructorOptions,
+ 	systemPreferences,
+ 	nativeTheme,
+ } from 'electron';
+import {Task} from 'electron';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -370,6 +371,14 @@ function createMainWindow(): BrowserWindow {
 	await updateAppMenu();
 	mainWindow = createMainWindow();
 
+	if (is.windows) {
+		const jumpToConversationMatch = process.argv.find(arg => /^--jump-to-conversation=\d+$/.test(arg));
+		if (jumpToConversationMatch) {
+			const conversationIndex = Number.parseInt(jumpToConversationMatch.split('=')[1], 10);
+			await ipc.callRenderer(mainWindow, 'jump-to-conversation', conversationIndex);
+		}
+	}
+
 	// Workaround for https://github.com/electron/electron/issues/5256
 	electronLocalshortcut.register(mainWindow, 'CommandOrControl+=', () => {
 		sendAction('zoom-in');
@@ -418,6 +427,27 @@ function createMainWindow(): BrowserWindow {
 			}));
 
 			app.dock.setMenu(Menu.buildFromTemplate([firstItem, {type: 'separator'}, ...items]));
+		});
+	}
+
+	if (is.windows) {
+		ipc.answerRenderer('conversations', (conversations: Conversation[]) => {
+			if (conversations.length === 0) {
+				app.setUserTasks([]);
+				return;
+			}
+
+			const recentConversations = conversations.slice(0, 10);
+			const tasks: Task[] = recentConversations.map(({label}, index) => ({
+				program: process.execPath,
+				arguments: '--jump-to-conversation=' + (index + 1),
+				iconPath: caprineIconPath,
+				iconIndex: 0,
+				title: label,
+				description: `Open ${label}`,
+			}));
+
+			app.setUserTasks(tasks);
 		});
 	}
 

@@ -5,3 +5,7 @@ export type IToggleSounds = {
 export type IToggleMuteNotifications = {
 	defaultStatus: boolean;
 };
+
+export type JumpToConversation = {
+	conversationIndex: number;
+};
