@@ -1,18 +1,19 @@
 import path from 'node:path';
 import {readFileSync, existsSync} from 'node:fs';
 import {
- 	app,
- 	nativeImage,
- 	screen as electronScreen,
- 	session,
- 	shell,
- 	BrowserWindow,
- 	Menu,
- 	Notification,
- 	MenuItemConstructorOptions,
- 	systemPreferences,
- 	nativeTheme,
+	app,
+	nativeImage,
+	screen as electronScreen,
+	session,
+	shell,
+	BrowserWindow,
+	Menu,
+	Notification,
+	MenuItemConstructorOptions,
+	systemPreferences,
+	nativeTheme,
 } from 'electron';
+import process from 'node:process';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -646,16 +647,16 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
- 	isQuitting = true;
+	isQuitting = true;
 
- 	// Checking whether the window exists to work around an Electron race issue:
- 	// https://github.com/sindresorhus/caprine/issues/809
- 	if (mainWindow) {
- 		const {isMaximized} = config.get('lastWindowState');
- 		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
- 	}
+	// Checking whether the window exists to work around an Electron race issue:
+	// https://github.com/sindresorhus/caprine/issues/809
+	if (mainWindow) {
+		const {isMaximized} = config.get('lastWindowState');
+		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
+	}
 
- 	if (is.windows) {
+	if (is.windows) {
 		app.setJumpList([]);
 	}
 });
