@@ -646,13 +646,17 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
-	isQuitting = true;
+ 	isQuitting = true;
 
-	// Checking whether the window exists to work around an Electron race issue:
-	// https://github.com/sindresorhus/caprine/issues/809
-	if (mainWindow) {
-		const {isMaximized} = config.get('lastWindowState');
-		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
+ 	// Checking whether the window exists to work around an Electron race issue:
+ 	// https://github.com/sindresorhus/caprine/issues/809
+ 	if (mainWindow) {
+ 		const {isMaximized} = config.get('lastWindowState');
+ 		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
+ 	}
+
+ 	if (is.windows) {
+		app.setJumpList([]);
 	}
 });
 
