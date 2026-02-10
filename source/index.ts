@@ -417,7 +417,7 @@ function createMainWindow(): BrowserWindow {
 				return;
 			}
 
-			const items = conversations.map(({label, icon}, index) => ({
+			const items = conversations.slice(0, 10).map(({label, icon}, index) => ({
 				label: `${label}`,
 				icon: nativeImage.createFromDataURL(icon),
 				click() {
