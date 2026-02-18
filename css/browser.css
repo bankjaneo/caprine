@@ -53,6 +53,37 @@ body {
 	display: none !important;
 }
 
+/* Hide Facebook top navigation bar (not present on messenger.com) */
+[role='banner'] {
+	display: none !important;
+}
+
+/* Remove top offset and card spacing reserved for Facebook navbar and layout */
+:root,
+.__fb-light-mode,
+.__fb-dark-mode {
+	--header-height: 0 !important;
+	--messenger-card-spacing: 0 !important;
+}
+
+/* Add card-style margins and gaps around the messenger layout (matching messenger.com spacing) */
+div:has(> [role='navigation'][aria-label='Thread list']) {
+	padding: 16px !important;
+	box-sizing: border-box !important;
+	gap: 16px !important;
+}
+
+/* Add gap between chat area and right sidebar */
+[role='main'] > div > div > div {
+	gap: 16px !important;
+}
+
+/* Round the conversation list container to match the chat container */
+[role='navigation'][aria-label='Thread list'] {
+	border-radius: 8px !important;
+	overflow: hidden !important;
+}
+
 /* Cookies notification: Adjust size for smaller windows */
 ._9o-g {
 	height: 290px !important;
