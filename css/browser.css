@@ -82,6 +82,9 @@ div:has(> [role='navigation'][aria-label='Thread list']) {
 [role='navigation'][aria-label='Thread list'] {
 	border-radius: 8px !important;
 	overflow: hidden !important;
+	width: 360px !important;
+	min-width: 360px !important;
+	max-width: 360px !important;
 }
 
 /* Cookies notification: Adjust size for smaller windows */
