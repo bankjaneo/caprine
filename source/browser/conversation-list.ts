@@ -145,9 +145,11 @@ async function createConversationNewDesign(element: HTMLElement): Promise<Conver
 
 	let unparsedLabel: HTMLElement | undefined;
 	for (const selector of selectors.conversationLabelSelectors) {
-		const candidate = element.querySelector<HTMLElement>(selector);
-		if (candidate) {
-			unparsedLabel = candidate;
+		// For attribute-based selectors that might match multiple elements,
+		// take only the first match which is always the conversation name
+		const candidates = element.querySelectorAll<HTMLElement>(selector);
+		if (candidates.length > 0) {
+			unparsedLabel = candidates[0]!;
 			break;
 		}
 	}

@@ -19,7 +19,7 @@ export default {
 	selectedConversation: '[role=navigation] [role=grid] [role=row] [role=gridcell] [role=link][aria-current=page]',
 	conversationLabelSelectors: [
 		'.a8c37x1j.ni8dbmo4.stjgntxs.l9j0dhe7 > span > span',
-		'[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]',
+		'[class*="x1lliihq"][class*="x6ikm8r"][class*="x10wlt62"][class*="xlyipyv"][class*="xuxw1ft"]',
 		'[class*="x1y1zt4g"]',
 		'[aria-label]:not([role=button]):not([role=menu]):not([role=navigation])',
 	],
