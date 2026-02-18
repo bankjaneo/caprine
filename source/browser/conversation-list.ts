@@ -133,6 +133,18 @@ async function getLabel(element: HTMLElement | undefined): Promise<string> {
 	return label.trim();
 }
 
+// Detect unread conversations by the visually-hidden accessibility label that
+// Facebook inserts for screen readers on facebook.com/messages.
+function isUnreadConversation(element: HTMLElement): boolean {
+	for (const child of element.querySelectorAll<HTMLElement>('div, span')) {
+		if (child.childElementCount === 0 && child.textContent?.trim() === 'Unread message:') {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 async function createConversationNewDesign(element: HTMLElement): Promise<Conversation> {
 	const conversation: Partial<Conversation> = {};
 	// TODO: Exclude muted conversations
@@ -141,7 +153,7 @@ async function createConversationNewDesign(element: HTMLElement): Promise<Conver
 	*/
 
 	conversation.selected = Boolean(element.querySelector('[role=row] [role=link] > div:only-child'));
-	conversation.unread = Boolean(element.querySelector('[aria-label="Mark as Read"]'));
+	conversation.unread = isUnreadConversation(element);
 
 	let unparsedLabel: HTMLElement | undefined;
 	for (const selector of selectors.conversationLabelSelectors) {
@@ -215,61 +227,68 @@ function generateStringFromNode(element: Element): string | undefined {
 function countUnread(mutationsList: MutationRecord[]): void {
 	const alreadyChecked: string[] = [];
 
-	const unreadMutations = mutationsList.filter(mutation =>
-		// When a conversations "becomes unread".
-		(
-			mutation.type === 'childList'
-			&& mutation.addedNodes.length > 0
-			&& ((mutation.addedNodes[0] as Element).className === selectors.conversationSidebarUnreadDot)
-		)
-		// When text is received
-		|| (
-			mutation.type === 'characterData'
-			// Make sure the text corresponds to a conversation
-			&& mutation.target.parentElement?.parentElement?.parentElement?.className === selectors.conversationSidebarTextParent
-		)
-		// When an emoji is received, node(s) are added
-		|| (
-			mutation.type === 'childList'
-			// Make sure the mutation corresponds to a conversation
-			&& mutation.target.parentElement?.parentElement?.className === selectors.conversationSidebarTextParent
-		)
-		// Emoji change
-		|| (
-			mutation.type === 'attributes'
-			&& mutation.target.parentElement?.parentElement?.parentElement?.parentElement?.className === selectors.conversationSidebarTextParent
-		));
-
 	// Check latest mutation first
-	for (const mutation of unreadMutations.reverse()) {
-		const current = (mutation.target.parentElement as Element).closest(selectors.conversationSidebarSelector)!;
+	for (const mutation of mutationsList.reverse()) {
+		// Find the conversation row containing this mutation.
+		// For childList mutations the target is the parent element; for others it's the
+		// element/text node itself, so go up one level first.
+		const target = mutation.type === 'childList'
+			? (mutation.target as Element)
+			: (mutation.target.parentElement as Element);
 
-		const href = current.closest('[role="link"]')?.getAttribute('href');
+		if (!target) {
+			continue;
+		}
+
+		// Walk up to the nearest [role=row] (a single conversation entry in the grid).
+		let current = target.closest<HTMLElement>(selectors.conversationSidebarSelector);
+
+		// When a whole row is added (conversation moves to top of list), the target
+		// is the grid container. Check addedNodes for a [role=row] directly.
+		if (!current && mutation.type === 'childList') {
+			for (const node of mutation.addedNodes) {
+				const element = node as Element;
+				if (element.matches?.(selectors.conversationSidebarSelector)) {
+					current = element as HTMLElement;
+					break;
+				}
+			}
+		}
+
+		if (!current) {
+			continue;
+		}
+
+		// Make sure this row is inside the chats grid (not some other [role=row] on the page).
+		if (!current.closest('[role=grid]')) {
+			continue;
+		}
+
+		const href = current.querySelector('[role="link"]')?.getAttribute('href');
 
 		if (!href) {
 			continue;
 		}
 
-		// It is possible to have multiple mutations for the same conversation, but we only want one notification.
-		// So if the current conversation has already been checked, continue.
-		// Additionally if the conversation is not unread, then also continue.
-		if (alreadyChecked.includes(href) || !current.querySelector('.' + selectors.conversationSidebarUnreadDot.replaceAll(/ /, '.'))) {
+		// Deduplicate: only process each conversation once per batch of mutations.
+		if (alreadyChecked.includes(href)) {
+			continue;
+		}
+
+		// Only notify for unread conversations.
+		if (!isUnreadConversation(current)) {
 			continue;
 		}
 
 		alreadyChecked.push(href);
 
-		// Get the image data URI from the parent of the author/text
+		// Get the icon data URI (set by createConversationList via createIcons).
 		const imgUrl = current.querySelector('img')?.dataset.caprineIcon;
-		const textOptions = current.querySelectorAll(selectors.conversationSidebarTextSelector);
-		// Get the author and text of the new message
-		const titleTextNode = textOptions[0];
-		const bodyTextNode = textOptions[1];
+		const textOptions = current.querySelectorAll<HTMLElement>(selectors.conversationSidebarTextSelector);
+		const titleText = generateStringFromNode(textOptions[0]);
+		const bodyText = textOptions[1] ? generateStringFromNode(textOptions[1]) : undefined;
 
-		const titleText = generateStringFromNode(titleTextNode);
-		const bodyText = generateStringFromNode(bodyTextNode);
-
-		if (!bodyText || !titleText || !imgUrl) {
+		if (!titleText || !imgUrl) {
 			continue;
 		}
 
@@ -277,25 +296,24 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		ipc.callMain('notification', {
 			id: 0,
 			title: titleText,
-			body: bodyText,
+			body: bodyText ?? 'New message',
 			icon: imgUrl,
 			silent: false,
 		});
 	}
 }
 
-async function updateTrayIcon(): Promise<void> {
+function updateTrayIcon(): void {
+	// Count unread conversations directly from the conversation grid.
+	// facebook.com/messages only shows the last message body in the sidebar —
+	// there is no per-conversation unread message count exposed in the DOM.
+	// The badge therefore reflects the number of conversations with unread messages.
+	const rows = document.querySelectorAll<HTMLElement>('[role=grid] [role=row]');
 	let messageCount = 0;
 
-	await elementReady(selectors.chatsIcon, {stopOnDomReady: false});
-
-	// Count unread messages in Chats, Marketplace, etc.
-	for (const element of document.querySelectorAll<HTMLElement>(selectors.chatsIcon)) {
-		// Extract messageNumber from ariaLabel
-		const messageNumber = element?.ariaLabel?.match(/\d+/g);
-
-		if (messageNumber) {
-			messageCount += Number.parseInt(messageNumber[0], 10);
+	for (const row of rows) {
+		if (isUnreadConversation(row)) {
+			messageCount++;
 		}
 	}
 
@@ -304,11 +322,11 @@ async function updateTrayIcon(): Promise<void> {
 
 window.addEventListener('load', async () => {
 	const sidebar = await elementReady('[role=navigation]:has([role=grid])', {stopOnDomReady: false});
-	const leftSidebar = await elementReady(`${selectors.leftSidebar}:has(${selectors.chatsIcon})`, {stopOnDomReady: false});
 
 	if (sidebar) {
 		const conversationListObserver = new MutationObserver(async () => sendConversationList());
 		const conversationCountObserver = new MutationObserver(countUnread);
+		const trayIconObserver = new MutationObserver(updateTrayIcon);
 
 		conversationListObserver.observe(sidebar, {
 			subtree: true,
@@ -324,16 +342,14 @@ window.addEventListener('load', async () => {
 			attributes: true,
 			attributeFilter: ['src', 'alt'],
 		});
-	}
 
-	if (leftSidebar) {
-		const chatsIconObserver = new MutationObserver(async () => updateTrayIcon());
-
-		chatsIconObserver.observe(leftSidebar, {
-			subtree: true,
+		// Watch for conversations being added/removed/reordered (badge count changes).
+		trayIconObserver.observe(sidebar, {
 			childList: true,
-			attributes: true,
-			attributeFilter: ['aria-label'],
+			subtree: true,
 		});
+
+		// Set initial badge count once the page is loaded.
+		updateTrayIcon();
 	}
 });
