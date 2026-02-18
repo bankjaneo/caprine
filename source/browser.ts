@@ -880,6 +880,51 @@ window.addEventListener('dblclick', (event: Event) => {
 	passive: true,
 });
 
+// Handle click on chat header to open individual profiles in external browser
+document.addEventListener('click', (event: MouseEvent) => {
+	const target = event.target as HTMLElement;
+
+	// Find if clicked element is within a link in the main chat area
+	// Profile links are relative URLs like /1175186871/
+	const link = target.closest<HTMLAnchorElement>('a[href^="/"]');
+	if (!link) {
+		return;
+	}
+
+	// Check if the link is inside the main conversation area
+	const mainElement = document.querySelector('[role="main"]');
+	if (!mainElement || !mainElement.contains(link)) {
+		return;
+	}
+
+	// Check if the clicked link is the header link (contains the chat name and active status)
+	// The header link typically contains a heading with the person's name
+	const hasHeading = link.querySelector('h1, h2, h3, h4, h5, h6');
+	if (!hasHeading) {
+		return;
+	}
+
+	// Check if this is an individual chat by checking if the href is a numeric user ID
+	// Individual chats have numeric IDs like /1175186871/, groups have different patterns
+	const href = link.getAttribute('href');
+	if (!href || !/^\/\d+\/$/.test(href)) {
+		return;
+	}
+
+	// Construct the full URL
+	const profileUrl = new URL(href, window.location.href).href;
+
+	// Prevent default navigation and stop other handlers
+	event.preventDefault();
+	event.stopPropagation();
+	event.stopImmediatePropagation();
+
+	// Open in external browser
+	ipc.callMain('open-external', profileUrl);
+}, {
+	capture: true,
+});
+
 window.addEventListener('load', async () => {
 	if (location.pathname.startsWith('/login')) {
 		const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]')!;

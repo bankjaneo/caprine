@@ -644,6 +644,10 @@ ipc.answerRenderer('titlebar-doubleclick', () => {
 	}
 });
 
+ipc.answerRenderer('open-external', async (url: string) => {
+	await shell.openExternal(url);
+});
+
 app.on('activate', () => {
 	if (mainWindow) {
 		mainWindow.show();
