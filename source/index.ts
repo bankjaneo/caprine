@@ -280,8 +280,8 @@ function createMainWindow(): BrowserWindow {
 		alwaysOnTop: config.get('alwaysOnTop'),
 		titleBarStyle: 'hiddenInset',
 		trafficLightPosition: {
-			x: 80,
-			y: 20,
+			x: 18,
+			y: 16,
 		},
 		autoHideMenuBar: config.get('autoHideMenuBar'),
 		webPreferences: {
