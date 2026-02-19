@@ -126,7 +126,6 @@ async function updateBadge(messageCount: number): Promise<void> {
 			&& previousMessageCount !== messageCount
 		) {
 			app.dock.bounce('informational');
-			previousMessageCount = messageCount;
 		}
 	}
 
@@ -136,7 +135,16 @@ async function updateBadge(messageCount: number): Promise<void> {
 		}
 
 		if (config.get('flashWindowOnMessage')) {
-			mainWindow.flashFrame(messageCount !== 0);
+			// Only flash when there are new unread messages (count increased from previous)
+			// This prevents repeated flashing from DOM mutations without new messages
+			const hasNewMessages = messageCount > previousMessageCount;
+
+			if (hasNewMessages) {
+				mainWindow.flashFrame(true);
+			} else if (messageCount === 0) {
+				// Reset flash state when all messages are read
+				mainWindow.flashFrame(false);
+			}
 		}
 	}
 
@@ -150,6 +158,10 @@ async function updateBadge(messageCount: number): Promise<void> {
 			updateOverlayIcon(await ipc.callRenderer(mainWindow, 'render-overlay-icon', messageCount));
 		}
 	}
+
+	// Update previousMessageCount for next comparison
+	// This is used to detect new messages vs repeated DOM mutations
+	previousMessageCount = messageCount;
 }
 
 function updateOverlayIcon({data, text}: {data: string; text: string}): void {

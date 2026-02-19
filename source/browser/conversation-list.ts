@@ -14,6 +14,11 @@ const padding = {
 	left: 0,
 };
 
+// Track notifications to prevent repeated notifications and flashing
+// Conversation ID -> timestamp of last notification
+const notifiedConversations = new Map<number, number>();
+const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between notifications for the same conversation
+
 function drawIcon(size: number, img?: HTMLImageElement): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
 
@@ -296,6 +301,18 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		// while preventing duplicates from the same conversation
 		const id = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
 
+		// Check if we've already notified for this conversation recently
+		const lastNotificationTime = notifiedConversations.get(id);
+		const now = Date.now();
+
+		if (lastNotificationTime && (now - lastNotificationTime) < NOTIFICATION_COOLDOWN_MS) {
+			// Skip notification if already notified within cooldown period
+			continue;
+		}
+
+		// Track this notification
+		notifiedConversations.set(id, now);
+
 		// Send a notification
 		ipc.callMain('notification', {
 			id,
@@ -307,21 +324,82 @@ function countUnread(mutationsList: MutationRecord[]): void {
 	}
 }
 
-function updateTrayIcon(): void {
+// Track unread count state for badge persistence
+// currentBadgeCount: what's currently shown in the badge
+// consecutiveZeroCount: how many times we've seen 0 unread in a row
+// Required to prevent badge from clearing on temporary DOM changes
+let currentBadgeCount = 0;
+let consecutiveZeroCount = 0;
+const ZERO_CONFIRMATION_THRESHOLD = 3; // Require 3 consecutive zero readings before clearing badge
+const BADGE_POLL_INTERVAL_MS = 2000; // Poll every 2 seconds
+
+function getUnreadCount(): number {
 	// Count unread conversations directly from the conversation grid.
 	// facebook.com/messages only shows the last message body in the sidebar —
 	// there is no per-conversation unread message count exposed in the DOM.
 	// The badge therefore reflects the number of conversations with unread messages.
 	const rows = document.querySelectorAll<HTMLElement>('[role=grid] [role=row]');
-	let messageCount = 0;
+	let count = 0;
 
 	for (const row of rows) {
 		if (isUnreadConversation(row)) {
-			messageCount++;
+			count++;
 		}
 	}
 
-	ipc.callMain('update-tray-icon', messageCount);
+	return count;
+}
+
+function updateTrayIcon(): void {
+	const actualUnreadCount = getUnreadCount();
+
+	// Case 1: We have unread messages - always show them immediately
+	if (actualUnreadCount > 0) {
+		currentBadgeCount = actualUnreadCount;
+		consecutiveZeroCount = 0;
+	} else if (actualUnreadCount === 0 && currentBadgeCount > 0) {
+		// Case 2: DOM shows 0 but badge currently shows unread
+		// This could be because:
+		// - Messages were actually read
+		// - Facebook cleared the DOM on window focus (temporary)
+		// - Some other DOM manipulation
+		consecutiveZeroCount++;
+
+		// Only clear the badge after multiple consecutive zero readings
+		// This prevents the badge from disappearing on temporary DOM changes
+		if (consecutiveZeroCount >= ZERO_CONFIRMATION_THRESHOLD) {
+			currentBadgeCount = 0;
+			consecutiveZeroCount = 0;
+			notifiedConversations.clear();
+		}
+		// If not enough consecutive zeros, keep showing the current badge count
+	}
+
+	ipc.callMain('update-tray-icon', currentBadgeCount);
+}
+
+// Poll for badge updates to ensure it stays in sync
+// This handles cases where DOM mutations are missed or delayed
+function startBadgePolling(): void {
+	setInterval(() => {
+		updateTrayIcon();
+	}, BADGE_POLL_INTERVAL_MS);
+}
+
+// Trigger immediate badge update when window gains focus or becomes visible
+// This ensures the badge updates instantly when user restores/minimizes the app
+function setupFocusTriggers(): void {
+	// Update on window focus
+	window.addEventListener('focus', () => {
+		updateTrayIcon();
+	});
+
+	// Update when window becomes visible (restored from minimized/hidden)
+	document.addEventListener('visibilitychange', () => {
+		if (!document.hidden) {
+			updateTrayIcon();
+		}
+	});
 }
 
 window.addEventListener('load', async () => {
@@ -355,5 +433,12 @@ window.addEventListener('load', async () => {
 
 		// Set initial badge count once the page is loaded.
 		updateTrayIcon();
+
+		// Start polling to ensure badge stays in sync
+		// This handles cases where DOM mutations are missed or Facebook clears indicators on focus
+		startBadgePolling();
+
+		// Setup triggers for immediate updates on focus/restore
+		setupFocusTriggers();
 	}
 });
