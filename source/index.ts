@@ -106,6 +106,14 @@ app.on('ready', () => {
 });
 
 async function updateBadge(messageCount: number): Promise<void> {
+	// Close all notifications when all messages are read to clear GNOME dock badge
+	if (messageCount === 0 && notifications.size > 0) {
+		for (const [id, notification] of notifications) {
+			notification.close();
+			notifications.delete(id);
+		}
+	}
+
 	if (!is.windows) {
 		if (config.get('showUnreadBadge') && !isDNDEnabled) {
 			app.badgeCount = messageCount;
@@ -677,6 +685,12 @@ ipc.answerRenderer(
 		// Don't send notifications when the window is focused
 		if (mainWindow.isFocused()) {
 			return;
+		}
+
+		// Close existing notification with the same ID if present (prevents duplicates on GNOME/Linux)
+		if (notifications.has(id)) {
+			notifications.get(id).close();
+			notifications.delete(id);
 		}
 
 		const notification = new Notification({

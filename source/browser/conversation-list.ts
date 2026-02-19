@@ -292,9 +292,13 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
+		// Generate unique ID from href to allow multiple conversation notifications
+		// while preventing duplicates from the same conversation
+		const id = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
+
 		// Send a notification
 		ipc.callMain('notification', {
-			id: 0,
+			id,
 			title: titleText,
 			body: bodyText ?? 'New message',
 			icon: imgUrl,
