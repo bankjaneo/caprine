@@ -1,6 +1,7 @@
 import path from 'node:path';
 import {readFileSync, existsSync} from 'node:fs';
 import {exec} from 'node:child_process';
+import process from 'node:process';
 import {
 	app,
 	nativeImage,
@@ -14,7 +15,7 @@ import {
 	systemPreferences,
 	nativeTheme,
 } from 'electron';
-import process from 'node:process';
+import soundPlay from 'sound-play';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -734,12 +735,24 @@ ipc.answerRenderer(
 			notifications.delete(id);
 		});
 
-		if (is.linux && !silent) {
-			exec('canberra-gtk-play -i message-new-instant 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || aplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || true');
-		}
+		if (!silent) {
+			const appPath = app.getAppPath();
+			const isAsar = appPath.includes('.asar');
+			const basePath = isAsar ? appPath.replace('.asar', '.asar.unpacked') : appPath;
+			const soundPath = path.join(basePath, 'static', 'sounds', 'messenger-notification.mp3');
 
-		if (is.macos && !silent) {
-			exec('afplay /System/Library/Sounds/Tink.aiff');
+			if (is.macos) {
+				// On macOS, use afplay with the custom sound file
+				exec(`afplay "${soundPath}"`);
+			} else {
+				// On other platforms, use sound-play library
+				soundPlay(soundPath).catch(() => {
+					// Fallback to system sounds if custom sound fails
+					if (is.linux) {
+						exec('canberra-gtk-play -i message-new-instant 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || aplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || true');
+					}
+				});
+			}
 		}
 
 		notification.show();
