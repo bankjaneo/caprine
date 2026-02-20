@@ -711,7 +711,7 @@ ipc.answerRenderer(
 			body: config.get('notificationMessagePreview') ? body : 'You have a new message',
 			hasReply: true,
 			icon: nativeImage.createFromDataURL(icon),
-			silent,
+			silent: silent || is.linux || is.macos,
 		});
 
 		notifications.set(id, notification);
@@ -736,6 +736,10 @@ ipc.answerRenderer(
 
 		if (is.linux && !silent) {
 			exec('canberra-gtk-play -i message-new-instant 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || aplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || true');
+		}
+
+		if (is.macos && !silent) {
+			exec('afplay /System/Library/Sounds/Tink.aiff');
 		}
 
 		notification.show();
