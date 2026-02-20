@@ -1,5 +1,6 @@
 import path from 'node:path';
 import {readFileSync, existsSync} from 'node:fs';
+import {exec} from 'node:child_process';
 import {
 	app,
 	nativeImage,
@@ -732,6 +733,10 @@ ipc.answerRenderer(
 			sendBackgroundAction('notification-callback', {callbackName: 'onclose', id});
 			notifications.delete(id);
 		});
+
+		if (is.linux && !silent) {
+			exec('canberra-gtk-play -i message-new-instant 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || aplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || true');
+		}
 
 		notification.show();
 	},
