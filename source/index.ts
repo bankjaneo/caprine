@@ -15,7 +15,6 @@ import {
 	systemPreferences,
 	nativeTheme,
 } from 'electron';
-import soundPlay from 'sound-play';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -747,9 +746,9 @@ ipc.answerRenderer(
 			} else if (is.linux) {
 				// On Linux, try GStreamer (most universal), then PulseAudio/paplay, then ALSA/aplay
 				exec(`gst-play-1.0 --no-interactive --quiet "${soundPath}" 2>/dev/null || paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}"`);
-			} else {
-				// On other platforms, use sound-play library
-				void soundPlay(soundPath);
+			} else if (is.windows) {
+				// On Windows, use PowerShell with Windows Media Player
+				exec(`powershell -c Add-Type -AssemblyName presentationCore; $player = New-Object system.windows.media.mediaplayer; $player.open('${soundPath}'); $player.Play(); Start-Sleep -s $player.NaturalDuration.TimeSpan.TotalSeconds`);
 			}
 		}
 
