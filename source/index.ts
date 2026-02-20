@@ -744,14 +744,12 @@ ipc.answerRenderer(
 			if (is.macos) {
 				// On macOS, use afplay with the custom sound file
 				exec(`afplay "${soundPath}"`);
+			} else if (is.linux) {
+				// On Linux, try GStreamer (most universal), then PulseAudio/paplay, then ALSA/aplay
+				exec(`gst-play-1.0 --no-interactive --quiet "${soundPath}" 2>/dev/null || paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}"`);
 			} else {
 				// On other platforms, use sound-play library
-				soundPlay(soundPath).catch(() => {
-					// Fallback to system sounds if custom sound fails
-					if (is.linux) {
-						exec('canberra-gtk-play -i message-new-instant 2>/dev/null || paplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || aplay /usr/share/sounds/freedesktop/stereo/message.oga 2>/dev/null || true');
-					}
-				});
+				void soundPlay(soundPath);
 			}
 		}
 
