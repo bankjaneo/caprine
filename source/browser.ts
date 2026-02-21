@@ -611,7 +611,7 @@ async function withConversationMenu(callback: () => void): Promise<void> {
 	let menuButton: HTMLElement | null = null;
 	const conversation = document.querySelector<HTMLElement>(selectors.selectedConversation)!.closest(`${selectors.conversationList} > div`);
 
-	menuButton = conversation?.querySelector('[aria-label=Menu][role=button]') ?? null;
+	menuButton = conversation?.querySelector('[aria-label*="More options"][role=button]') ?? null;
 
 	if (menuButton) {
 		await withMenu(menuButton, callback);
@@ -620,7 +620,16 @@ async function withConversationMenu(callback: () => void): Promise<void> {
 
 async function openMuteModal(): Promise<void> {
 	await withConversationMenu(() => {
-		selectMenuItem(2);
+		const menuItems = document.querySelectorAll<HTMLElement>(
+			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+		);
+
+		for (const item of menuItems) {
+			if (item.textContent?.includes('Mute')) {
+				item.click();
+				break;
+			}
+		}
 	});
 }
 
@@ -631,47 +640,34 @@ These functions assume:
 
 In other words, you should only use this function within a callback that is provided to `withConversationMenu()`, because `withConversationMenu()` makes sure to have the conversation menu open before executing the callback and closes the conversation menu afterwards.
 */
-function isSelectedConversationGroup(): boolean {
-	// Individual conversations include an entry for "View Profile", which is type `a`
-	return !document.querySelector<HTMLElement>(`${selectors.conversationMenuSelectorNewDesign} a[role=menuitem]`);
-}
-
-function isSelectedConversationMetaAI(): boolean {
-	// Meta AI menu only has 1 separator of type `hr`
-	return !document.querySelector<HTMLElement>(`${selectors.conversationMenuSelectorNewDesign} hr:nth-of-type(2)`);
-}
 
 async function archiveSelectedConversation(): Promise<void> {
 	await withConversationMenu(() => {
-		const [isGroup, isNotGroup, isMetaAI] = [-4, -3, -2];
+		const menuItems = document.querySelectorAll<HTMLElement>(
+			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+		);
 
-		let archiveMenuIndex;
-		if (isSelectedConversationMetaAI()) {
-			archiveMenuIndex = isMetaAI;
-		} else if (isSelectedConversationGroup()) {
-			archiveMenuIndex = isGroup;
-		} else {
-			archiveMenuIndex = isNotGroup;
+		for (const item of menuItems) {
+			if (item.textContent?.includes('Archive')) {
+				item.click();
+				break;
+			}
 		}
-
-		selectMenuItem(archiveMenuIndex);
 	});
 }
 
 async function deleteSelectedConversation(): Promise<void> {
 	await withConversationMenu(() => {
-		const [isGroup, isNotGroup, isMetaAI] = [-3, -2, -1];
+		const menuItems = document.querySelectorAll<HTMLElement>(
+			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+		);
 
-		let deleteMenuIndex;
-		if (isSelectedConversationMetaAI()) {
-			deleteMenuIndex = isMetaAI;
-		} else if (isSelectedConversationGroup()) {
-			deleteMenuIndex = isGroup;
-		} else {
-			deleteMenuIndex = isNotGroup;
+		for (const item of menuItems) {
+			if (item.textContent?.includes('Delete')) {
+				item.click();
+				break;
+			}
 		}
-
-		selectMenuItem(deleteMenuIndex);
 	});
 }
 
