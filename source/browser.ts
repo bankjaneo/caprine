@@ -880,47 +880,55 @@ window.addEventListener('dblclick', (event: Event) => {
 	passive: true,
 });
 
-// Handle click on chat header to open individual profiles in external browser
+// Handle links in chat area to open in OS default browser
+// Only intercepts links inside the main chat area [role="main"], allowing login
+// and other pages to function normally. Images open in-app modal.
 document.addEventListener('click', (event: MouseEvent) => {
 	const target = event.target as HTMLElement;
 
-	// Find if clicked element is within a link in the main chat area
-	// Profile links are relative URLs like /1175186871/
-	const link = target.closest<HTMLAnchorElement>('a[href^="/"]');
+	// Check if the clicked element is inside the main chat area
+	const mainElement = document.querySelector('[role="main"]');
+	if (!mainElement || !mainElement.contains(target)) {
+		return;
+	}
+
+	// Find if clicked element is within a link
+	const link = target.closest<HTMLAnchorElement>('a[href]');
 	if (!link) {
 		return;
 	}
 
-	// Check if the link is inside the main conversation area
-	const mainElement = document.querySelector('[role="main"]');
-	if (!mainElement || !mainElement.contains(link)) {
+	// Skip if user clicked directly on an image (allow modal view)
+	if (target.tagName === 'IMG') {
 		return;
 	}
 
-	// Check if the clicked link is the header link (contains the chat name and active status)
-	// The header link typically contains a heading with the person's name
-	const hasHeading = link.querySelector('h1, h2, h3, h4, h5, h6');
-	if (!hasHeading) {
-		return;
-	}
-
-	// Check if this is an individual chat by checking if the href is a numeric user ID
-	// Individual chats have numeric IDs like /1175186871/, groups have different patterns
+	// Get the href
 	const href = link.getAttribute('href');
-	if (!href || !/^\/\d+\/$/.test(href)) {
+	if (!href) {
 		return;
 	}
 
-	// Construct the full URL
-	const profileUrl = new URL(href, window.location.href).href;
+	// Skip anchor links
+	if (href.startsWith('#')) {
+		return;
+	}
 
-	// Prevent default navigation and stop other handlers
+	// Skip JavaScript links
+	if (href.toLowerCase().startsWith('javascript')) {
+		return;
+	}
+
+	// Prevent default navigation
 	event.preventDefault();
 	event.stopPropagation();
 	event.stopImmediatePropagation();
 
+	// Construct full URL for relative links
+	const fullUrl = href.startsWith('http') ? href : new URL(href, window.location.href).href;
+
 	// Open in external browser
-	ipc.callMain('open-external', profileUrl);
+	ipc.callMain('open-external', fullUrl);
 }, {
 	capture: true,
 });
