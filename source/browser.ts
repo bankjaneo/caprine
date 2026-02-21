@@ -251,6 +251,32 @@ async function toggleSounds({checked}: IToggleSounds): Promise<void> {
 
 ipc.answerMain('toggle-sounds', toggleSounds);
 
+// Get current mute state without opening preferences (for startup sync)
+ipc.answerMain('get-mute-notifications-state', async () => {
+	const shouldClosePreferences = await openHiddenPreferences();
+
+	const notificationSwitch = document.querySelector<HTMLInputElement>(
+		selectors.notificationCheckbox,
+	);
+
+	if (notificationSwitch) {
+		const isCurrentlyChecked = notificationSwitch.getAttribute('aria-checked') === 'true';
+		const isCurrentlyMuted = !isCurrentlyChecked;
+
+		if (shouldClosePreferences) {
+			await closePreferences();
+		}
+
+		return isCurrentlyMuted;
+	}
+
+	if (shouldClosePreferences) {
+		await closePreferences();
+	}
+
+	return false;
+});
+
 ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotifications) => {
 	const shouldClosePreferences = await openHiddenPreferences();
 

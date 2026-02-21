@@ -15,8 +15,8 @@ const padding = {
 };
 
 // Track notifications to prevent repeated notifications and flashing
-// Conversation ID -> timestamp of last notification
-const notifiedConversations = new Map<number, number>();
+// Message ID (conversationId:messageContent) -> timestamp of last notification
+const notifiedConversations = new Map<string, number>();
 const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between notifications for the same conversation
 
 function drawIcon(size: number, img?: HTMLImageElement): HTMLCanvasElement {
@@ -297,25 +297,27 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
-		// Generate unique ID from href to allow multiple conversation notifications
-		// while preventing duplicates from the same conversation
-		const id = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
+		// Generate unique ID from conversation href + message body to track individual messages
+		// This allows multiple notifications for the same conversation with different messages
+		const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
+		const messageContent = bodyText ?? '';
+		const messageId = `${conversationId}:${messageContent}`;
 
-		// Check if we've already notified for this conversation recently
-		const lastNotificationTime = notifiedConversations.get(id);
+		// Check if we've already notified for this specific message
+		const lastNotificationTime = notifiedConversations.get(messageId);
 		const now = Date.now();
 
 		if (lastNotificationTime && (now - lastNotificationTime) < NOTIFICATION_COOLDOWN_MS) {
-			// Skip notification if already notified within cooldown period
+			// Skip notification if already notified for this message within cooldown period
 			continue;
 		}
 
 		// Track this notification
-		notifiedConversations.set(id, now);
+		notifiedConversations.set(messageId, now);
 
 		// Send a notification
 		ipc.callMain('notification', {
-			id,
+			id: conversationId,
 			title: titleText,
 			body: bodyText ?? 'New message',
 			icon: imgUrl,

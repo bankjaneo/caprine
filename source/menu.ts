@@ -7,6 +7,7 @@ import {
 	MenuItemConstructorOptions,
 	dialog,
 } from 'electron';
+import {ipcMain} from 'electron-better-ipc';
 import {
 	is,
 	appMenu,
@@ -270,24 +271,21 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			/* TODO: Fix notifications */
 			label: 'Show Message Preview in Notifications',
 			type: 'checkbox',
-			visible: is.development,
 			checked: config.get('notificationMessagePreview'),
 			click(menuItem) {
 				config.set('notificationMessagePreview', menuItem.checked);
 			},
 		},
 		{
-			/* TODO: Fix notifications */
 			label: 'Mute Notifications',
 			id: 'mute-notifications',
 			type: 'checkbox',
-			visible: is.development,
-			checked: false,
-			click(menuItem) {
-				sendAction('toggle-mute-notifications', {checked: menuItem.checked});
+			checked: config.get('notificationsMuted'),
+			async click(menuItem) {
+				config.set('notificationsMuted', menuItem.checked);
+				await ipcMain.callRenderer(getWindow(), 'toggle-mute-notifications', {checked: menuItem.checked});
 			},
 		},
 		{
@@ -299,14 +297,15 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			/* TODO: Fix notification badge */
 			label: 'Show Unread Badge',
 			type: 'checkbox',
-			visible: is.development,
 			checked: config.get('showUnreadBadge'),
-			click() {
-				config.set('showUnreadBadge', !config.get('showUnreadBadge'));
-				sendAction('reload');
+			click(menuItem) {
+				config.set('showUnreadBadge', menuItem.checked);
+				// Immediately clear badge if unchecked
+				if (!menuItem.checked) {
+					app.badgeCount = 0;
+				}
 			},
 		},
 		{

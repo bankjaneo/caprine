@@ -116,9 +116,7 @@ async function updateBadge(messageCount: number): Promise<void> {
 	}
 
 	if (!is.windows) {
-		if (config.get('showUnreadBadge') && !isDNDEnabled) {
-			app.badgeCount = messageCount;
-		}
+		app.badgeCount = (config.get('showUnreadBadge') && !isDNDEnabled) ? messageCount : 0;
 
 		if (
 			is.macos
@@ -131,9 +129,7 @@ async function updateBadge(messageCount: number): Promise<void> {
 	}
 
 	if (!is.macos) {
-		if (config.get('showUnreadBadge')) {
-			tray.setBadge(messageCount > 0);
-		}
+		tray.setBadge(config.get('showUnreadBadge') ? messageCount > 0 : false);
 
 		if (config.get('flashWindowOnMessage')) {
 			// Only flash when there are new unread messages (count increased from previous)
@@ -539,11 +535,6 @@ function createMainWindow(): BrowserWindow {
 			});
 		}
 
-		// TODO: Re-enable this when muting notifications is fixed
-		// setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications', {
-		// 	defaultStatus: config.get('notificationsMuted'),
-		// }));
-
 		ipc.callRenderer(mainWindow, 'toggle-message-buttons', config.get('showMessageButtons'));
 
 		await webContents.executeJavaScript(
@@ -721,6 +712,11 @@ ipc.answerRenderer(
 		if (notifications.has(id)) {
 			notifications.get(id).close();
 			notifications.delete(id);
+		}
+
+		// Skip notification if notifications are muted
+		if (config.get('notificationsMuted')) {
+			return;
 		}
 
 		const notification = new Notification({
