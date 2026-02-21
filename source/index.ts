@@ -596,11 +596,17 @@ function createMainWindow(): BrowserWindow {
 				return false;
 			}
 
+			// Allow root path for login flow, but we'll redirect to /messages after
+			if (pathname === '/' || pathname === '') {
+				return true;
+			}
+
 			return (
 				pathname.startsWith('/messages')
 				|| pathname.startsWith('/login')
 				|| pathname.startsWith('/checkpoint')
 				|| pathname.startsWith('/two_step_verification')
+				|| pathname.startsWith('/logout')
 			);
 		};
 
@@ -633,6 +639,17 @@ function createMainWindow(): BrowserWindow {
 
 		event.preventDefault();
 		await shell.openExternal(url);
+	});
+
+	// Redirect from Facebook homepage to /messages after login
+	webContents.on('did-navigate', (_event, url) => {
+		const {hostname, pathname} = new URL(url);
+		if (hostname === 'www.facebook.com' && (pathname === '/' || pathname === '')) {
+			// Redirect to messages page after a short delay to allow any login process to complete
+			setTimeout(() => {
+				webContents.loadURL('https://www.facebook.com/messages/');
+			}, 500);
+		}
 	});
 })();
 

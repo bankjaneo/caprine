@@ -22,33 +22,23 @@ async function withMenu(
 	// Click the menu button
 	menuButtonElement.click();
 
-	// Wait for the menu to close before removing the 'hide-dropdowns' class
-	await elementReady('.x78zum5.xdt5ytf.x1n2onr6.xat3117.xxzkxad > div:nth-child(2) > div', {stopOnDomReady: false});
-	const menuLayer = document.querySelector('.x78zum5.xdt5ytf.x1n2onr6.xat3117.xxzkxad > div:nth-child(2) > div');
+	// Wait a short time for the menu to render
+	await new Promise(resolve => {
+		setTimeout(resolve, 100);
+	});
 
-	if (menuLayer) {
-		const observer = new MutationObserver(() => {
-			if (!menuLayer.hasChildNodes()) {
-				classList.remove('hide-dropdowns');
-				observer.disconnect();
-			}
-		});
-		observer.observe(menuLayer, {childList: true});
-	} else {
-		// Fallback in case .uiContextualLayerPositioner is missing
+	try {
+		await callback();
+	} finally {
+		// Always remove the hide-dropdowns class after callback completes
 		classList.remove('hide-dropdowns');
 	}
-
-	await callback();
 }
 
 async function isNewSidebar(): Promise<boolean> {
-	// TODO: stopOnDomReady might not be needed
-	await elementReady(selectors.leftSidebar, {stopOnDomReady: false});
-
-	const sidebars = document.querySelectorAll<HTMLElement>(selectors.leftSidebar);
-
-	return sidebars.length === 2;
+	// Facebook.com/messages always uses the new sidebar design
+	// This function is kept for backwards compatibility
+	return true;
 }
 
 async function withSettingsMenu(callback: () => Promise<void> | void): Promise<void> {
@@ -141,9 +131,23 @@ ipc.answerMain('log-out', async () => {
 			nodes[nodes.length - 1].click();
 		}, 250);
 	} else {
-		await withSettingsMenu(() => {
-			selectMenuItem(-1);
+		// Click the User Profile button to open the account menu
+		const profileButton = document.querySelector<HTMLElement>(selectors.userProfileButton);
+		profileButton?.click();
+
+		// Wait a bit for the menu to appear
+		await new Promise(resolve => {
+			setTimeout(resolve, 150);
 		});
+
+		// Find and click the "Log out" button by its text content
+		const buttons = document.querySelectorAll<HTMLElement>('[role="button"], [role="menuitem"]');
+		for (const button of buttons) {
+			if (button.textContent?.includes('Log out')) {
+				button.click();
+				break;
+			}
+		}
 	}
 });
 
@@ -656,9 +660,24 @@ async function deleteSelectedConversation(): Promise<void> {
 }
 
 async function openPreferences(): Promise<void> {
-	await withSettingsMenu(() => {
-		selectMenuItem(1);
-	});
+	// Click the Settings button to open the menu
+	const settingsButton = document.querySelector<HTMLElement>(selectors.userMenuNewSidebar);
+	settingsButton?.click();
+
+	// Wait for the menu to appear
+	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
+
+	// Find and click the "Preferences" menu item by its text content
+	const menuItems = document.querySelectorAll<HTMLElement>(
+		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+	);
+
+	for (const item of menuItems) {
+		if (item.textContent?.includes('Preferences')) {
+			item.click();
+			break;
+		}
+	}
 
 	await elementReady(selectors.preferencesSelector, {stopOnDomReady: false});
 }
