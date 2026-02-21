@@ -14,10 +14,9 @@ const padding = {
 	left: 0,
 };
 
-// Track notifications to prevent repeated notifications and flashing
-// Message ID (conversationId:messageContent) -> timestamp of last notification
-const notifiedConversations = new Map<string, number>();
-const NOTIFICATION_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown between notifications for the same conversation
+// Track last notified content per conversation to prevent DOM mutation repeats
+// New messages with different content will still notify immediately
+const lastNotifiedContent = new Map<string, string>();
 
 function drawIcon(size: number, img?: HTMLImageElement): HTMLCanvasElement {
 	const canvas = document.createElement('canvas');
@@ -297,23 +296,21 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
-		// Generate unique ID from conversation href + message body to track individual messages
-		// This allows multiple notifications for the same conversation with different messages
+		// Generate conversation ID for notification tracking
 		const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
-		const messageContent = bodyText ?? '';
-		const messageId = `${conversationId}:${messageContent}`;
 
-		// Check if we've already notified for this specific message
-		const lastNotificationTime = notifiedConversations.get(messageId);
-		const now = Date.now();
+		// Track last notified content per conversation to prevent DOM mutation repeats
+		// New messages with different content will still notify immediately
+		const currentContent = bodyText ?? '';
+		const lastContent = lastNotifiedContent.get(href);
 
-		if (lastNotificationTime && (now - lastNotificationTime) < NOTIFICATION_COOLDOWN_MS) {
-			// Skip notification if already notified for this message within cooldown period
+		// Only skip if content is exactly the same (DOM mutation duplicate)
+		if (lastContent === currentContent) {
 			continue;
 		}
 
-		// Track this notification
-		notifiedConversations.set(messageId, now);
+		// Track this conversation's latest content
+		lastNotifiedContent.set(href, currentContent);
 
 		// Send a notification
 		ipc.callMain('notification', {
@@ -372,7 +369,7 @@ function updateTrayIcon(): void {
 		if (consecutiveZeroCount >= ZERO_CONFIRMATION_THRESHOLD) {
 			currentBadgeCount = 0;
 			consecutiveZeroCount = 0;
-			notifiedConversations.clear();
+			lastNotifiedContent.clear();
 		}
 		// If not enough consecutive zeros, keep showing the current badge count
 	}
