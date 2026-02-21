@@ -3,7 +3,7 @@ export type IToggleSounds = {
 };
 
 export type IToggleMuteNotifications = {
-	defaultStatus: boolean;
+	checked: boolean;
 };
 
 export type JumpToConversation = {

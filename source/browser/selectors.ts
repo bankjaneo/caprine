@@ -7,7 +7,7 @@ export default {
 	conversationSidebarTextParent: 'html-span xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x18d9i69 xkhd6sd x1hl2dhg x16tdsg8 x1vvkbs x6s0dn4 x9f619 x78zum5 x193iq5w xeuugli xg83lxy', // Parent element of the conversation text element (needed for notifications)
 	conversationSidebarTextSelector: '[class="x1lliihq x6ikm8r x10wlt62 x1n2onr6 xlyipyv xuxw1ft"]', // Generic selector for the text contents of all conversations
 	conversationSidebarSelector: '[role=row]', // Selector for a single conversation row in the grid
-	notificationCheckbox: '._374b:nth-of-type(4) ._4ng2 input',
+	notificationCheckbox: '[role="dialog"] [role="switch"]:first-of-type',
 	rightSidebarMenu: '.x6s0dn4.x3nfvp2.x1fgtraw.xl56j7k.x1n2onr6.xgd8bvy',
 	rightSidebarButtons: '.x9f619.x1ja2u2z.x78zum5.x2lah0s.x1n2onr6.xl56j7k.x1qjc9v5.xozqiw3.x1q0g3np.xn6708d.x1ye3gou.x1cnzs8.xdj266r.x11i5rnm.xat24cr.x1mh8g0r > div [role=button]',
 	muteIconNewDesign: 'path[d="M29.676 7.746c.353-.352.44-.92.15-1.324a1 1 0 00-1.524-.129L6.293 28.29a1 1 0 00.129 1.523c.404.29.972.204 1.324-.148l3.082-3.08A2.002 2.002 0 0112.242 26h15.244c.848 0 1.57-.695 1.527-1.541-.084-1.643-1.87-1.145-2.2-3.515l-1.073-8.157-.002-.01a1.976 1.976 0 01.562-1.656l3.376-3.375zm-9.165 20.252H15.51c-.313 0-.565.275-.506.575.274 1.38 1.516 2.422 3.007 2.422 1.49 0 2.731-1.042 3.005-2.422.06-.3-.193-.575-.505-.575zm-10.064-6.719L22.713 9.02a.997.997 0 00-.124-1.51 7.792 7.792 0 00-12.308 5.279l-1.04 7.897c-.089.672.726 1.074 1.206.594z"]',

@@ -6,7 +6,7 @@ import {nativeTheme} from '@electron/remote';
 import selectors from './browser/selectors';
 import {toggleVideoAutoplay} from './autoplay';
 import {sendConversationList} from './browser/conversation-list';
-import {IToggleSounds} from './types';
+import {IToggleSounds, IToggleMuteNotifications} from './types';
 
 type ThemeSource = typeof nativeTheme.themeSource;
 
@@ -251,23 +251,39 @@ async function toggleSounds({checked}: IToggleSounds): Promise<void> {
 
 ipc.answerMain('toggle-sounds', toggleSounds);
 
-ipc.answerMain('toggle-mute-notifications', async () => {
+ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotifications) => {
 	const shouldClosePreferences = await openHiddenPreferences();
 
-	const notificationCheckbox = document.querySelector<HTMLInputElement>(
+	const notificationSwitch = document.querySelector<HTMLInputElement>(
 		selectors.notificationCheckbox,
-	)!;
+	);
+
+	if (notificationSwitch) {
+		// Check current state
+		const isCurrentlyChecked = notificationSwitch.getAttribute('aria-checked') === 'true';
+		const isCurrentlyMuted = !isCurrentlyChecked;
+
+		// Only toggle if current state doesn't match desired state
+		// checked=true means user wants to MUTE (turn switch OFF)
+		// checked=false means user wants to UNMUTE (turn switch ON)
+		if (isCurrentlyMuted !== checked) {
+			notificationSwitch.click();
+		}
+
+		if (shouldClosePreferences) {
+			await closePreferences();
+		}
+
+		// Return the muted state
+		return checked;
+	}
 
 	if (shouldClosePreferences) {
 		await closePreferences();
 	}
 
-	// TODO: Fix notifications
-	if (notificationCheckbox === null) {
-		return false;
-	}
-
-	return !notificationCheckbox.checked;
+	// Return false if switch not found
+	return false;
 });
 
 ipc.answerMain('toggle-message-buttons', async () => {

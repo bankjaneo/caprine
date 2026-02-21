@@ -413,9 +413,9 @@ function createMainWindow(): BrowserWindow {
 			label: 'Mute Notifications',
 			type: 'checkbox',
 			visible: is.development,
-			checked: config.get('notificationsMuted'),
-			async click() {
-				setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications'));
+			checked: false,
+			async click(menuItem) {
+				setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications', {checked: menuItem.checked}));
 			},
 		};
 

@@ -285,9 +285,9 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			id: 'mute-notifications',
 			type: 'checkbox',
 			visible: is.development,
-			checked: config.get('notificationsMuted'),
-			click() {
-				sendAction('toggle-mute-notifications');
+			checked: false,
+			click(menuItem) {
+				sendAction('toggle-mute-notifications', {checked: menuItem.checked});
 			},
 		},
 		{
@@ -827,7 +827,7 @@ ${debugInfo()}`;
 					submenu: preferencesSubmenu,
 				},
 				{
-					label: 'Messenger Settings',
+					label: 'Messenger Preferences',
 					accelerator: 'Control+,',
 					click() {
 						sendAction('show-preferences');
