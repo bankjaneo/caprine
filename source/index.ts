@@ -84,6 +84,34 @@ let previousMessageCount = 0;
 let dockMenu: Menu;
 let isDNDEnabled = false;
 
+function saveWindowState(): void {
+	if (!mainWindow) {
+		return;
+	}
+
+	const bounds = mainWindow.getNormalBounds();
+	const {isMaximized} = config.get('lastWindowState');
+
+	// Validate window dimensions - ensure they're at least minimum size
+	// This prevents saving corrupted/invalid window states on Linux
+	const validWidth = Math.max(bounds.width, 400);
+	const validHeight = Math.max(bounds.height, 200);
+
+	// Get the scale factor of the display where the window is located
+	// This is needed to handle HiDPI/fractional scaling on Linux
+	const display = electronScreen.getDisplayMatching(bounds);
+	const {scaleFactor} = display;
+
+	config.set('lastWindowState', {
+		x: bounds.x,
+		y: bounds.y,
+		width: validWidth,
+		height: validHeight,
+		isMaximized,
+		scaleFactor,
+	});
+}
+
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
 }
@@ -289,13 +317,36 @@ function createMainWindow(): BrowserWindow {
 	const shouldUseDarkColors = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
 	const backgroundColor = shouldUseDarkColors ? '#1e1e1e' : undefined;
 
+	// Handle HiDPI/fractional scaling on Linux
+	// getNormalBounds() returns logical pixels (scaled by display scale factor)
+	// We need to convert saved logical pixels to physical pixels, then to current display's logical pixels
+	let windowWidth = lastWindowState.width;
+	let windowHeight = lastWindowState.height;
+
+	if (is.linux && lastWindowState.scaleFactor) {
+		// Get the display where the window will be created
+		const display = electronScreen.getDisplayNearestPoint({
+			x: lastWindowState.x ?? 0,
+			y: lastWindowState.y ?? 0,
+		});
+		const currentScaleFactor = display.scaleFactor;
+		const savedScaleFactor = lastWindowState.scaleFactor;
+
+		if (savedScaleFactor !== currentScaleFactor) {
+			// Convert: saved_logical * saved_scale / current_scale = current_logical
+			// This maintains the same physical pixel size
+			windowWidth = Math.round((windowWidth * savedScaleFactor) / currentScaleFactor);
+			windowHeight = Math.round((windowHeight * savedScaleFactor) / currentScaleFactor);
+		}
+	}
+
 	const win = new BrowserWindow({
 		title: app.name,
 		show: false,
 		x: lastWindowState.x,
 		y: lastWindowState.y,
-		width: lastWindowState.width,
-		height: lastWindowState.height,
+		width: windowWidth,
+		height: windowHeight,
 		icon: is.linux ? caprineIconPath : undefined,
 		minWidth: 400,
 		minHeight: 200,
@@ -374,8 +425,7 @@ function createMainWindow(): BrowserWindow {
 	});
 
 	win.on('resize', () => {
-		const {isMaximized} = config.get('lastWindowState');
-		config.set('lastWindowState', {...win.getNormalBounds(), isMaximized});
+		saveWindowState();
 	});
 
 	win.on('maximize', () => {
@@ -692,17 +742,26 @@ app.on('activate', () => {
 app.on('before-quit', () => {
 	isQuitting = true;
 
-	// Checking whether the window exists to work around an Electron race issue:
-	// https://github.com/sindresorhus/caprine/issues/809
-	if (mainWindow) {
-		const {isMaximized} = config.get('lastWindowState');
-		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
-	}
+	// Save window state before quitting
+	saveWindowState();
 
 	if (is.windows) {
 		app.setJumpList([]);
 	}
 });
+
+// Handle Linux shutdown signals - SIGTERM is sent during logout/shutdown
+if (is.linux) {
+	process.on('SIGTERM', () => {
+		saveWindowState();
+		app.quit();
+	});
+
+	process.on('SIGHUP', () => {
+		saveWindowState();
+		app.quit();
+	});
+}
 
 const notifications = new Map();
 
