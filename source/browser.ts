@@ -1,4 +1,5 @@
 import process from 'node:process';
+import {webFrame} from 'electron';
 import {ipcRenderer as ipc} from 'electron-better-ipc';
 import {is} from 'electron-util';
 import elementReady from 'element-ready';
@@ -9,6 +10,9 @@ import {sendConversationList} from './browser/conversation-list';
 import {IToggleSounds, IToggleMuteNotifications} from './types';
 
 type ThemeSource = typeof nativeTheme.themeSource;
+
+// Inject scrollbar-hiding CSS immediately in preload to prevent white flash
+webFrame.insertCSS('html::-webkit-scrollbar { display: none !important; }');
 
 async function withMenu(
 	menuButtonElement: HTMLElement,
@@ -849,12 +853,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// Configure do not disturb
 	if (is.macos) {
 		await updateDoNotDisturb();
-	}
-
-	// Prevent flash of white on startup when in dark mode
-	// TODO: find a CSS-only solution
-	if (!is.macos && nativeTheme.shouldUseDarkColors) {
-		document.documentElement.style.backgroundColor = '#1e1e1e';
 	}
 
 	// Disable autoplay if set in settings

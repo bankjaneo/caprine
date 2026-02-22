@@ -284,6 +284,11 @@ function createMainWindow(): BrowserWindow {
 		? 'https://work.facebook.com/chat'
 		: 'https://www.facebook.com/messages/';
 
+	// Determine background color based on theme to prevent flash of white
+	const theme = config.get('theme');
+	const shouldUseDarkColors = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
+	const backgroundColor = shouldUseDarkColors ? '#1e1e1e' : undefined;
+
 	const win = new BrowserWindow({
 		title: app.name,
 		show: false,
@@ -301,6 +306,7 @@ function createMainWindow(): BrowserWindow {
 			y: 16,
 		},
 		autoHideMenuBar: config.get('autoHideMenuBar'),
+		backgroundColor,
 		webPreferences: {
 			preload: path.join(__dirname, 'browser.js'),
 			contextIsolation: true,
