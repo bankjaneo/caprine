@@ -38,11 +38,11 @@ export default async function updateMenu(): Promise<Menu> {
 		},
 	};
 
-	const newRoomItem: MenuItemConstructorOptions = {
-		label: 'New Room',
+	const newChannelItem: MenuItemConstructorOptions = {
+		label: 'Create Channel',
 		accelerator: 'CommandOrControl+O',
 		click() {
-			sendAction('new-room');
+			sendAction('create-channel');
 		},
 	};
 
@@ -554,12 +554,6 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			label: 'Show Marketplace Chats',
-			click() {
-				sendAction('show-marketplace-view');
-			},
-		},
-		{
 			label: 'Show Message Requests',
 			click() {
 				sendAction('show-requests-view');
@@ -569,6 +563,12 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			label: 'Show Archived Chats',
 			click() {
 				sendAction('show-archive-view');
+			},
+		},
+		{
+			label: 'Show Restricted Accounts',
+			click() {
+				sendAction('show-restricted-view');
 			},
 		},
 	];
@@ -783,7 +783,7 @@ ${debugInfo()}`;
 			role: 'fileMenu',
 			submenu: [
 				newConversationItem,
-				newRoomItem,
+				newChannelItem,
 				{
 					type: 'separator',
 				},
@@ -817,7 +817,7 @@ ${debugInfo()}`;
 			role: 'fileMenu',
 			submenu: [
 				newConversationItem,
-				newRoomItem,
+				newChannelItem,
 				{
 					type: 'separator',
 				},

@@ -39,72 +39,6 @@ async function withMenu(
 	}
 }
 
-async function isNewSidebar(): Promise<boolean> {
-	// Facebook.com/messages always uses the new sidebar design
-	// This function is kept for backwards compatibility
-	return true;
-}
-
-async function withSettingsMenu(callback: () => Promise<void> | void): Promise<void> {
-	// Wait for navigation pane buttons to show up
-	const settingsMenu = await elementReady(selectors.userMenuNewSidebar, {stopOnDomReady: false});
-
-	await withMenu(settingsMenu as HTMLElement, callback);
-}
-
-async function selectMenuItem(itemNumber: number): Promise<void> {
-	let selector;
-
-	// Wait for menu to show up
-	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
-
-	const items = document.querySelectorAll<HTMLElement>(
-		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
-	);
-
-	// Negative items will select from the end
-	if (itemNumber < 0) {
-		selector = -itemNumber <= items.length ? items[items.length + itemNumber] : null;
-	} else {
-		selector = itemNumber <= items.length ? items[itemNumber - 1] : null;
-	}
-
-	if (selector) {
-		selector.click();
-	}
-}
-
-async function selectOtherListViews(itemNumber: number): Promise<void> {
-	// In case one of other views is shown
-	clickBackButton();
-
-	const newSidebar = await isNewSidebar();
-
-	if (newSidebar) {
-		const items = document.querySelectorAll<HTMLElement>(
-			`${selectors.viewsMenu} span > a`,
-		);
-
-		const selector = itemNumber <= items.length ? items[itemNumber - 1] : null;
-
-		if (selector) {
-			selector.click();
-		}
-	} else {
-		await withSettingsMenu(() => {
-			selectMenuItem(itemNumber);
-		});
-	}
-}
-
-function clickBackButton(): void {
-	const backButton = document.querySelector<HTMLElement>('._30yy._2oc9');
-
-	if (backButton) {
-		backButton.click();
-	}
-}
-
 ipc.answerMain('show-preferences', async () => {
 	if (isPreferencesOpen()) {
 		return;
@@ -114,11 +48,21 @@ ipc.answerMain('show-preferences', async () => {
 });
 
 ipc.answerMain('new-conversation', async () => {
-	document.querySelector<HTMLElement>('[href="/new/"]')!.click();
+	document.querySelector<HTMLElement>('[aria-label="New message"]')!.click();
 });
 
-ipc.answerMain('new-room', async () => {
-	document.querySelector<HTMLElement>('.x16n37ib .x1i10hfl.x6umtig.x1b1mbwd.xaqea5y.xav7gou.x1ypdohk.xe8uvvx.xdj266r.x11i5rnm.xat24cr.x1mh8g0r.x16tdsg8.x1hl2dhg.xggy1nq.x87ps6o.x1lku1pv.x1a2a7pz.x6s0dn4.x14yjl9h.xudhj91.x18nykt9.xww2gxu.x972fbf.xcfux6l.x1qhh985.xm0m39n.x9f619.x78zum5.xl56j7k.xexx8yu.x4uap5.x18d9i69.xkhd6sd.x1n2onr6.xc9qbxq.x14qfxbe.x1qhmfi1')!.click();
+ipc.answerMain('create-channel', async () => {
+	// Click "New message" button to open the dialog
+	document.querySelector<HTMLElement>('[aria-label="New message"]')!.click();
+
+	// Wait for the "Create channel" element to appear
+	const createChannelElement = await elementReady<HTMLElement>('#newBroadcastChannel div', {
+		stopOnDomReady: false,
+	});
+
+	if (createChannelElement) {
+		createChannelElement.click();
+	}
 });
 
 ipc.answerMain('log-out', async () => {
@@ -193,7 +137,7 @@ ipc.answerMain('insert-sticker', () => {
 });
 
 ipc.answerMain('attach-files', () => {
-	document.querySelector<HTMLElement>('[aria-label="Attach a file up to 25 MB"]')!.click();
+	document.querySelector<HTMLElement>('[aria-label^="Attach a file"]')!.click();
 });
 
 ipc.answerMain('focus-text-input', () => {
@@ -323,20 +267,57 @@ ipc.answerMain('toggle-message-buttons', async () => {
 	document.body.classList.toggle('show-message-buttons', !showMessageButtons);
 });
 
-ipc.answerMain('show-chats-view', async () => {
-	await selectOtherListViews(1);
-});
+async function openSettingsMenuAndClickItem(
+	menuItemText: string,
+	options?: {useExactMatch?: boolean; waitForSelector?: string},
+): Promise<void> {
+	// Click the Settings button
+	const settingsButton = document.querySelector<HTMLElement>(selectors.userMenuNewSidebar);
+	if (!settingsButton) {
+		return;
+	}
 
-ipc.answerMain('show-marketplace-view', async () => {
-	await selectOtherListViews(2);
+	settingsButton.click();
+
+	// Wait for the menu to appear
+	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
+
+	// Find and click the menu item
+	const menuItems = document.querySelectorAll<HTMLElement>(
+		`${selectors.conversationMenuSelectorNewDesign} [role="menuitem"]`,
+	);
+
+	for (const item of menuItems) {
+		const text = item.textContent?.trim();
+		const matches = options?.useExactMatch ? text === menuItemText : text?.includes(menuItemText);
+
+		if (matches) {
+			item.click();
+			break;
+		}
+	}
+
+	// Optionally wait for something to appear after clicking
+	if (options?.waitForSelector) {
+		await elementReady(options.waitForSelector, {stopOnDomReady: false});
+	}
+}
+
+ipc.answerMain('show-chats-view', async () => {
+	// Navigate to main messages page
+	window.location.href = '/messages';
 });
 
 ipc.answerMain('show-requests-view', async () => {
-	await selectOtherListViews(3);
+	await openSettingsMenuAndClickItem('Message requests', {useExactMatch: true});
 });
 
 ipc.answerMain('show-archive-view', async () => {
-	await selectOtherListViews(4);
+	await openSettingsMenuAndClickItem('Archived chats', {useExactMatch: true});
+});
+
+ipc.answerMain('show-restricted-view', async () => {
+	await openSettingsMenuAndClickItem('Restricted accounts', {useExactMatch: true});
 });
 
 ipc.answerMain('toggle-video-autoplay', () => {
@@ -704,26 +685,10 @@ async function deleteSelectedConversation(): Promise<void> {
 }
 
 async function openPreferences(): Promise<void> {
-	// Click the Settings button to open the menu
-	const settingsButton = document.querySelector<HTMLElement>(selectors.userMenuNewSidebar);
-	settingsButton?.click();
-
-	// Wait for the menu to appear
-	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
-
-	// Find and click the "Preferences" menu item by its text content
-	const menuItems = document.querySelectorAll<HTMLElement>(
-		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
-	);
-
-	for (const item of menuItems) {
-		if (item.textContent?.includes('Preferences')) {
-			item.click();
-			break;
-		}
-	}
-
-	await elementReady(selectors.preferencesSelector, {stopOnDomReady: false});
+	await openSettingsMenuAndClickItem('Preferences', {
+		useExactMatch: false,
+		waitForSelector: selectors.preferencesSelector,
+	});
 }
 
 function isPreferencesOpen(): boolean {
