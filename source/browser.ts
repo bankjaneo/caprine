@@ -156,22 +156,24 @@ ipc.answerMain('log-out', async () => {
 });
 
 ipc.answerMain('find', () => {
-	document.querySelector<HTMLElement>('[type="search"]')!.focus();
+	document.querySelector<HTMLElement>('[aria-label="Search Messenger"]')!.focus();
 });
 
 async function openSearchInConversation() {
-	const mainView = document.querySelector('.x9f619.x1ja2u2z.x78zum5.x1n2onr6.x1r8uery.x1iyjqo2.xs83m0k.xeuugli.x1qughib.x1qjc9v5.xozqiw3.x1q0g3np.xexx8yu.x85a59c')!;
-	const rightSidebarIsClosed = Boolean(mainView.querySelector<HTMLElement>(':scope > div:only-child'));
+	const chatInfoButton = document.querySelector<HTMLElement>('[aria-label="Conversation information"]');
+	const isPanelExpanded = chatInfoButton?.getAttribute('aria-expanded') === 'true';
 
-	if (rightSidebarIsClosed) {
+	// Expand the right panel if it's collapsed
+	if (!isPanelExpanded) {
 		document.querySelector<HTMLElement>(selectors.rightSidebarMenu)?.click();
+		// Wait for panel to expand and search button to appear
+		await new Promise(resolve => {
+			setTimeout(resolve, 300);
+		});
 	}
 
-	await elementReady(selectors.rightSidebarButtons, {stopOnDomReady: false});
-	const buttonList = document.querySelectorAll<HTMLElement>(selectors.rightSidebarButtons);
-
-	// Search in conversation is the last button
-	buttonList[buttonList.length - 1].click();
+	// Click the Search button in the right panel
+	document.querySelector<HTMLElement>('[aria-label="Search"]')?.click();
 }
 
 ipc.answerMain('search', () => {
@@ -179,19 +181,19 @@ ipc.answerMain('search', () => {
 });
 
 ipc.answerMain('insert-gif', () => {
-	document.querySelector<HTMLElement>('.x1n2onr6.x1iyjqo2.xw2csxc > div:nth-child(3) > span > div')!.click();
+	document.querySelector<HTMLElement>('[aria-label="Choose a GIF"]')!.click();
 });
 
 ipc.answerMain('insert-emoji', async () => {
-	document.querySelector<HTMLElement>('.x1n2onr6.x1iyjqo2.xw2csxc > div:nth-child(5) > span > div')!.click();
+	document.querySelector<HTMLElement>('[aria-label="Choose an emoji"]')!.click();
 });
 
 ipc.answerMain('insert-sticker', () => {
-	document.querySelector<HTMLElement>('.x1n2onr6.x1iyjqo2.xw2csxc > div:nth-child(2) > span > div')!.click();
+	document.querySelector<HTMLElement>('[aria-label="Choose a sticker"]')!.click();
 });
 
 ipc.answerMain('attach-files', () => {
-	document.querySelector<HTMLElement>('.x1n2onr6.x1iyjqo2.xw2csxc > div:nth-child(1) > span > div')!.click();
+	document.querySelector<HTMLElement>('[aria-label="Attach a file up to 25 MB"]')!.click();
 });
 
 ipc.answerMain('focus-text-input', () => {
