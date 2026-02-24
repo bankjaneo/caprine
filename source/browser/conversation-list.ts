@@ -1,6 +1,5 @@
 import {ipcRenderer as ipc} from 'electron-better-ipc';
 import elementReady from 'element-ready';
-import {isNull} from 'lodash';
 import selectors from './selectors';
 
 const icon = {
@@ -104,23 +103,34 @@ async function getIcon(element: HTMLElement, unread: boolean): Promise<string> {
 	return element.getAttribute(unread ? icon.unread : icon.read)!;
 }
 
-async function getLabel(element: HTMLElement): Promise<string> {
-	if (isNull(element)) {
+async function getLabel(element: HTMLElement | undefined): Promise<string> {
+	if (!element) {
 		return '';
 	}
 
-	const emojis: HTMLElement[] = [];
-	if (element !== null) {
-		for (const elementCurrent of element.children) {
-			emojis.push(elementCurrent as HTMLElement);
+	let label = element.textContent ?? '';
+
+	if (label.trim() === '') {
+		const ariaLabel = element.getAttribute('aria-label');
+		if (ariaLabel && ariaLabel.trim() !== '') {
+			label = ariaLabel;
 		}
 	}
 
-	for (const emoji of emojis) {
-		emoji.outerHTML = emoji.querySelector('img')?.getAttribute('alt') ?? '';
+	if (label.trim() === '') {
+		const emojis: HTMLElement[] = [];
+		for (const elementCurrent of element.children) {
+			emojis.push(elementCurrent as HTMLElement);
+		}
+
+		for (const emoji of emojis) {
+			emoji.outerHTML = emoji.querySelector('img')?.getAttribute('alt') ?? '';
+		}
+
+		label = element.textContent ?? '';
 	}
 
-	return element.textContent ?? '';
+	return label.trim();
 }
 
 async function createConversationNewDesign(element: HTMLElement): Promise<Conversation> {
@@ -133,7 +143,15 @@ async function createConversationNewDesign(element: HTMLElement): Promise<Conver
 	conversation.selected = Boolean(element.querySelector('[role=row] [role=link] > div:only-child'));
 	conversation.unread = Boolean(element.querySelector('[aria-label="Mark as Read"]'));
 
-	const unparsedLabel = element.querySelector<HTMLElement>('.a8c37x1j.ni8dbmo4.stjgntxs.l9j0dhe7 > span > span')!;
+	let unparsedLabel: HTMLElement | undefined;
+	for (const selector of selectors.conversationLabelSelectors) {
+		const candidate = element.querySelector<HTMLElement>(selector);
+		if (candidate) {
+			unparsedLabel = candidate;
+			break;
+		}
+	}
+
 	conversation.label = await getLabel(unparsedLabel);
 
 	const iconElement = element.querySelector<HTMLElement>('img')!;
@@ -159,7 +177,12 @@ async function createConversationList(): Promise<Conversation[]> {
 	// Remove last element from childer list
 	elements.splice(-1, 1);
 
-	const conversations: Conversation[] = await Promise.all(elements.map(async element => createConversationNewDesign(element)));
+	const promises = elements.map(async element => {
+		const conversation = await createConversationNewDesign(element);
+		return conversation.label ? conversation : undefined;
+	});
+	const conversationsResult = await Promise.all(promises);
+	const conversations = conversationsResult.filter(Boolean) as Conversation[];
 
 	return conversations;
 }

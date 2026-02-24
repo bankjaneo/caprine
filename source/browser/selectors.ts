@@ -17,6 +17,12 @@ export default {
 	userMenuNewSidebar: '[role=navigation]  > div >  div:nth-child(2) > div > div > div:nth-child(1) [role=button]',
 	viewsMenu: '.x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x2lah0s.x193iq5w.xdj266r',
 	selectedConversation: '[role=navigation] [role=grid] [role=row] [role=gridcell] [role=link][aria-current=page]',
+	conversationLabelSelectors: [
+		'.a8c37x1j.ni8dbmo4.stjgntxs.l9j0dhe7 > span > span',
+		'[class="x1lliihq x193iq5w x6ikm8r x10wlt62 xlyipyv xuxw1ft"]',
+		'[class*="x1y1zt4g"]',
+		'[aria-label]:not([role=button]):not([role=menu]):not([role=navigation])',
+	],
 	// ! Very fragile selector (most likely cause of hidden dialog issue)
 	preferencesSelector: '.x1n2onr6.x1ja2u2z.x1afcbsf.x78zum5.xdt5ytf.x1a2a7pz.x6ikm8r.x10wlt62.x71s49j.x1jx94hy.x1g2kw80.xxadwq3.x16n5opg.x3hh19s.xl7ujzl.x1kl8bxo.xhkep3z.xb3b7hn.xwhkkir.x1n7qst7.x17omtbh:has(.x1l90r2v.x1swvt13.x1pi30zi)',
 	// TODO: Fix this selector for new design

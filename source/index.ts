@@ -13,6 +13,7 @@ import {
 	systemPreferences,
 	nativeTheme,
 } from 'electron';
+import process from 'node:process';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -370,6 +371,14 @@ function createMainWindow(): BrowserWindow {
 	await updateAppMenu();
 	mainWindow = createMainWindow();
 
+	if (is.windows) {
+		const jumpToConversationMatch = process.argv.find(argument => /^--jump-to-conversation=\d+$/.test(argument));
+		if (jumpToConversationMatch) {
+			const conversationIndex = Number.parseInt(jumpToConversationMatch.split('=')[1], 10);
+			await ipc.callRenderer(mainWindow, 'jump-to-conversation', conversationIndex);
+		}
+	}
+
 	// Workaround for https://github.com/electron/electron/issues/5256
 	electronLocalshortcut.register(mainWindow, 'CommandOrControl+=', () => {
 		sendAction('zoom-in');
@@ -408,7 +417,7 @@ function createMainWindow(): BrowserWindow {
 				return;
 			}
 
-			const items = conversations.map(({label, icon}, index) => ({
+			const items = conversations.slice(0, 10).map(({label, icon}, index) => ({
 				label: `${label}`,
 				icon: nativeImage.createFromDataURL(icon),
 				click() {
@@ -418,6 +427,34 @@ function createMainWindow(): BrowserWindow {
 			}));
 
 			app.dock.setMenu(Menu.buildFromTemplate([firstItem, {type: 'separator'}, ...items]));
+		});
+	}
+
+	if (is.windows) {
+		ipc.answerRenderer('conversations', (conversations: Conversation[]) => {
+			if (conversations.length === 0) {
+				app.setJumpList([]);
+				return;
+			}
+
+			const recentConversations = conversations.slice(0, 10);
+			const tasks = recentConversations.map(({label}, index) => ({
+				type: 'task' as const,
+				title: label,
+				program: process.execPath,
+				args: '--jump-to-conversation=' + (index + 1),
+				iconPath: caprineIconPath,
+				iconIndex: 0,
+				description: `Open ${label}`,
+			}));
+
+			app.setJumpList([
+				{
+					type: 'custom',
+					name: 'Conversations',
+					items: tasks,
+				},
+			]);
 		});
 	}
 
@@ -617,6 +654,10 @@ app.on('before-quit', () => {
 	if (mainWindow) {
 		const {isMaximized} = config.get('lastWindowState');
 		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
+	}
+
+	if (is.windows) {
+		app.setJumpList([]);
 	}
 });
 
