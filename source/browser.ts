@@ -902,6 +902,20 @@ window.addEventListener('dblclick', (event: Event) => {
 	passive: true,
 });
 
+function filenameFromMimeType(mimeType: string): string {
+	const ext: Record<string, string> = {
+		'application/pdf': 'file.pdf',
+		'image/jpeg': 'image.jpg',
+		'image/png': 'image.png',
+		'image/gif': 'image.gif',
+		'video/mp4': 'video.mp4',
+		'audio/mpeg': 'audio.mp3',
+		'application/zip': 'archive.zip',
+	};
+	const base = mimeType.split(';')[0]?.trim() ?? '';
+	return ext[base] ?? 'download';
+}
+
 // Handle links in chat area to open in OS default browser
 // Only intercepts links inside the main chat area [role="main"], allowing login
 // and other pages to function normally. Images open in-app modal.
@@ -938,6 +952,28 @@ document.addEventListener('click', (event: MouseEvent) => {
 
 	// Skip JavaScript links
 	if (href.toLowerCase().startsWith('javascript')) {
+		return;
+	}
+
+	// Handle blob: URLs — download via IPC instead of opening externally
+	if (href.startsWith('blob:')) {
+		event.preventDefault();
+		event.stopPropagation();
+		event.stopImmediatePropagation();
+
+		void (async () => {
+			try {
+				const response = await fetch(href);
+				const arrayBuffer = await response.arrayBuffer();
+				const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
+				const filename
+					= link.getAttribute('download')
+					|| link.textContent?.trim()
+					|| filenameFromMimeType(contentType);
+				await ipc.callMain('save-blob-file', {data: arrayBuffer, filename});
+			} catch {}
+		})();
+
 		return;
 	}
 

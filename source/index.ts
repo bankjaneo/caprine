@@ -1,5 +1,5 @@
 import path from 'node:path';
-import {readFileSync, existsSync} from 'node:fs';
+import {readFileSync, existsSync, promises as fs} from 'node:fs';
 import {exec} from 'node:child_process';
 import process from 'node:process';
 import {
@@ -731,6 +731,20 @@ ipc.answerRenderer('titlebar-doubleclick', () => {
 
 ipc.answerRenderer('open-external', async (url: string) => {
 	await shell.openExternal(url);
+});
+
+ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
+	const downloadsDir = app.getPath('downloads');
+	let savePath = path.join(downloadsDir, filename);
+	let counter = 1;
+	const {name, ext} = path.parse(filename);
+	while (existsSync(savePath)) {
+		savePath = path.join(downloadsDir, `${name} (${counter})${ext}`);
+		counter++;
+	}
+
+	await fs.writeFile(savePath, Buffer.from(data));
+	shell.showItemInFolder(savePath);
 });
 
 app.on('activate', () => {
