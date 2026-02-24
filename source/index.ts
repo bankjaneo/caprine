@@ -639,7 +639,7 @@ function createMainWindow(): BrowserWindow {
 	webContents.on('will-navigate', async (event, url) => {
 		const isFacebookMessages = (url: string): boolean => {
 			const {hostname, pathname} = new URL(url);
-			if (hostname !== 'www.facebook.com') {
+			if (hostname !== 'www.facebook.com' && hostname !== 'web.facebook.com') {
 				return false;
 			}
 
@@ -691,7 +691,7 @@ function createMainWindow(): BrowserWindow {
 	// Redirect from Facebook homepage to /messages after login
 	webContents.on('did-navigate', (_event, url) => {
 		const {hostname, pathname} = new URL(url);
-		if (hostname === 'www.facebook.com' && (pathname === '/' || pathname === '')) {
+		if ((hostname === 'www.facebook.com' || hostname === 'web.facebook.com') && (pathname === '/' || pathname === '')) {
 			// Redirect to messages page after a short delay to allow any login process to complete
 			setTimeout(() => {
 				webContents.loadURL('https://www.facebook.com/messages/');
@@ -733,13 +733,17 @@ ipc.answerRenderer('open-external', async (url: string) => {
 	await shell.openExternal(url);
 });
 
+ipc.answerRenderer('navigate-to-chats', () => {
+	mainWindow.webContents.loadURL('https://www.facebook.com/messages/');
+});
+
 ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
-	const downloadsDir = app.getPath('downloads');
-	let savePath = path.join(downloadsDir, filename);
+	const downloadsDirectory = app.getPath('downloads');
+	let savePath = path.join(downloadsDirectory, filename);
 	let counter = 1;
 	const {name, ext} = path.parse(filename);
 	while (existsSync(savePath)) {
-		savePath = path.join(downloadsDir, `${name} (${counter})${ext}`);
+		savePath = path.join(downloadsDirectory, `${name} (${counter})${ext}`);
 		counter++;
 	}
 

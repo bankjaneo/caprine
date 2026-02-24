@@ -137,12 +137,23 @@ async function getLabel(element: HTMLElement | undefined): Promise<string> {
 	return label.trim();
 }
 
-// Detect unread conversations by the visually-hidden accessibility label that
-// Facebook inserts for screen readers on facebook.com/messages.
+// Detect unread conversations by the visually-hidden accessibility span that
+// Facebook inserts for screen readers (1px × 1px, position:absolute, overflow:hidden).
+// This approach is language-independent — it detects the hidden element by CSS style,
+// not by its text content which varies by language.
+// IMPORTANT: The parent element must have 'html-span' class to distinguish the unread
+// indicator from other hidden accessibility labels like "Online now", "Sent", etc.
 function isUnreadConversation(element: HTMLElement): boolean {
 	for (const child of element.querySelectorAll<HTMLElement>('div, span')) {
-		if (child.childElementCount === 0 && child.textContent?.trim() === 'Unread message:') {
-			return true;
+		if (child.childElementCount === 0 && child.textContent?.trim()) {
+			const style = window.getComputedStyle(child);
+			if (
+				style.position === 'absolute'
+				&& (style.width === '1px' || style.height === '1px' || style.overflow === 'hidden')
+				&& child.parentElement?.classList.contains('html-span')
+			) {
+				return true;
+			}
 		}
 	}
 

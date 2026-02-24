@@ -18,25 +18,21 @@ async function withMenu(
 	menuButtonElement: HTMLElement,
 	callback: () => Promise<void> | void,
 ): Promise<void> {
-	const {classList} = document.documentElement;
-
-	// Prevent the dropdown menu from displaying
-	classList.add('hide-dropdowns');
-
 	// Click the menu button
 	menuButtonElement.click();
 
-	// Wait a short time for the menu to render
+	// Wait for menu items to actually render
+	await elementReady(`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`, {
+		stopOnDomReady: false,
+	});
+
+	// Additional wait to ensure all menu items are fully rendered and positioned
 	await new Promise(resolve => {
 		setTimeout(resolve, 100);
 	});
 
-	try {
-		await callback();
-	} finally {
-		// Always remove the hide-dropdowns class after callback completes
-		classList.remove('hide-dropdowns');
-	}
+	// Execute callback to click the desired menu item
+	await callback();
 }
 
 ipc.answerMain('show-preferences', async () => {
@@ -48,12 +44,12 @@ ipc.answerMain('show-preferences', async () => {
 });
 
 ipc.answerMain('new-conversation', async () => {
-	document.querySelector<HTMLElement>('[aria-label="New message"]')!.click();
+	document.querySelector<HTMLElement>('a[href="/messages/new/"]')!.click();
 });
 
 ipc.answerMain('create-channel', async () => {
 	// Click "New message" button to open the dialog
-	document.querySelector<HTMLElement>('[aria-label="New message"]')!.click();
+	document.querySelector<HTMLElement>('a[href="/messages/new/"]')!.click();
 
 	// Wait for the "Create channel" element to appear
 	const createChannelElement = await elementReady<HTMLElement>('#newBroadcastChannel div', {
@@ -79,32 +75,53 @@ ipc.answerMain('log-out', async () => {
 			nodes[nodes.length - 1].click();
 		}, 250);
 	} else {
-		// Click the User Profile button to open the account menu
-		const profileButton = document.querySelector<HTMLElement>(selectors.userProfileButton);
-		profileButton?.click();
+		const banner = document.querySelector<HTMLElement>('[role="banner"]');
 
-		// Wait a bit for the menu to appear
+		// Temporarily show the banner so the profile button is interactive
+		if (banner) {
+			banner.style.setProperty('display', 'block', 'important');
+		}
+
+		// Click the profile button (last [aria-expanded] button in banner)
+		const profileButtons = [...document.querySelectorAll<HTMLElement>(selectors.userProfileButton)];
+		profileButtons[profileButtons.length - 1]?.click();
+
+		// Wait for the profile dropdown to render
 		await new Promise(resolve => {
-			setTimeout(resolve, 150);
+			setTimeout(resolve, 300);
 		});
 
-		// Find and click the "Log out" button by its text content
-		const buttons = document.querySelectorAll<HTMLElement>('[role="button"], [role="menuitem"]');
-		for (const button of buttons) {
-			if (button.textContent?.includes('Log out')) {
-				button.click();
-				break;
+		// Find the logout button inside the profile dialog.
+		// The dialog contains: [...items..., Log out, More (aria-haspopup=menu)]
+		// Logout is always the button immediately before the "More" expand button.
+		const dialog = document.querySelector<HTMLElement>('[role="dialog"]');
+		if (dialog) {
+			const dialogButtons = [...dialog.querySelectorAll<HTMLElement>('[role="button"]')]
+				.filter(b => b.offsetParent !== null);
+			const moreIndex = dialogButtons.findIndex(b => b.getAttribute('aria-haspopup') === 'menu');
+			if (moreIndex > 0) {
+				dialogButtons[moreIndex - 1]?.click();
+			} else {
+				// Fallback: last button in dialog
+				dialogButtons[dialogButtons.length - 1]?.click();
 			}
+		}
+
+		// Restore banner to hidden state
+		if (banner) {
+			banner.style.removeProperty('display');
 		}
 	}
 });
 
 ipc.answerMain('find', () => {
-	document.querySelector<HTMLElement>('[aria-label="Search Messenger"]')!.focus();
+	// Scope to the Messenger nav (which contains [role=grid]) to avoid focusing
+	// the main Facebook site search bar (index 0 on the page)
+	document.querySelector<HTMLElement>('[role="navigation"]:has([role=grid]) input[type="search"]')!.focus();
 });
 
 async function openSearchInConversation() {
-	const chatInfoButton = document.querySelector<HTMLElement>('[aria-label="Conversation information"]');
+	const chatInfoButton = document.querySelector<HTMLElement>('[role=button]:has(path[d^="M18,10 C16.6195"])');
 	const isPanelExpanded = chatInfoButton?.getAttribute('aria-expanded') === 'true';
 
 	// Expand the right panel if it's collapsed
@@ -116,8 +133,8 @@ async function openSearchInConversation() {
 		});
 	}
 
-	// Click the Search button in the right panel
-	document.querySelector<HTMLElement>('[aria-label="Search"]')?.click();
+	// Click the Search button in the right panel (SVG path, language-independent)
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="m104.609 929.891"])')?.click();
 }
 
 ipc.answerMain('search', () => {
@@ -125,19 +142,19 @@ ipc.answerMain('search', () => {
 });
 
 ipc.answerMain('insert-gif', () => {
-	document.querySelector<HTMLElement>('[aria-label="Choose a GIF"]')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M460.25 1079"])')!.click();
 });
 
 ipc.answerMain('insert-emoji', async () => {
-	document.querySelector<HTMLElement>('[aria-label="Choose an emoji"]')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M210.5,405"])')!.click();
 });
 
 ipc.answerMain('insert-sticker', () => {
-	document.querySelector<HTMLElement>('[aria-label="Choose a sticker"]')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M106.617 923.049"])')!.click();
 });
 
 ipc.answerMain('attach-files', () => {
-	document.querySelector<HTMLElement>('[aria-label^="Attach a file"]')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M99.825 918.322"])')!.click();
 });
 
 ipc.answerMain('focus-text-input', () => {
@@ -268,7 +285,7 @@ ipc.answerMain('toggle-message-buttons', async () => {
 });
 
 async function openSettingsMenuAndClickItem(
-	menuItemText: string,
+	identifier: string | {svgPathPrefix: string},
 	options?: {useExactMatch?: boolean; waitForSelector?: string},
 ): Promise<void> {
 	// Click the Settings button
@@ -282,14 +299,19 @@ async function openSettingsMenuAndClickItem(
 	// Wait for the menu to appear
 	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
 
-	// Find and click the menu item
+	// Find and click the menu item by text (English) or SVG icon path (language-independent)
 	const menuItems = document.querySelectorAll<HTMLElement>(
 		`${selectors.conversationMenuSelectorNewDesign} [role="menuitem"]`,
 	);
 
 	for (const item of menuItems) {
-		const text = item.textContent?.trim();
-		const matches = options?.useExactMatch ? text === menuItemText : text?.includes(menuItemText);
+		let matches: boolean;
+		if (typeof identifier === 'string') {
+			const text = item.textContent?.trim();
+			matches = options?.useExactMatch ? text === identifier : Boolean(text?.includes(identifier));
+		} else {
+			matches = Boolean(item.querySelector(`path[d^="${identifier.svgPathPrefix}"]`));
+		}
 
 		if (matches) {
 			item.click();
@@ -304,20 +326,19 @@ async function openSettingsMenuAndClickItem(
 }
 
 ipc.answerMain('show-chats-view', async () => {
-	// Navigate to main messages page
-	window.location.href = '/messages';
+	await ipc.callMain('navigate-to-chats');
 });
 
 ipc.answerMain('show-requests-view', async () => {
-	await openSettingsMenuAndClickItem('Message requests', {useExactMatch: true});
+	await openSettingsMenuAndClickItem({svgPathPrefix: 'M95.5 219.208'});
 });
 
 ipc.answerMain('show-archive-view', async () => {
-	await openSettingsMenuAndClickItem('Archived chats', {useExactMatch: true});
+	await openSettingsMenuAndClickItem({svgPathPrefix: 'M109.5 207.75'});
 });
 
 ipc.answerMain('show-restricted-view', async () => {
-	await openSettingsMenuAndClickItem('Restricted accounts', {useExactMatch: true});
+	await openSettingsMenuAndClickItem({svgPathPrefix: 'M92.75 262'});
 });
 
 ipc.answerMain('toggle-video-autoplay', () => {
@@ -619,12 +640,53 @@ async function setZoom(zoomFactor: number): Promise<void> {
 	await ipc.callMain<number, void>('set-config-zoomFactor', zoomFactor);
 }
 
+/** Finds a menu item in [role=menu] by its icon SVG path prefix (language-independent). */
+function findMenuItemByIconPath(svgPathPrefix: string): HTMLElement | undefined {
+	const items = document.querySelectorAll<HTMLElement>(
+		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+	);
+	for (const item of items) {
+		if (item.querySelector(`path[d^="${svgPathPrefix}"]`)) {
+			return item;
+		}
+	}
+
+	return undefined;
+}
+
+/** Returns all [role=menuitem] elements in the currently open conversation menu. */
+function getConversationMenuItems(): HTMLElement[] {
+	return [...document.querySelectorAll<HTMLElement>(
+		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
+	)];
+}
+
+/** Finds the Mute menu item: SVG path first, positional fallback (always index 1). */
+function findMuteMenuItem(): HTMLElement | undefined {
+	return findMenuItemByIconPath('M109.362 211') ?? getConversationMenuItems()[1] ?? undefined;
+}
+
+/** Finds the Delete menu item: SVG path first, fallback via Report item anchor. */
+function findDeleteMenuItem(): HTMLElement | undefined {
+	const byPath = findMenuItemByIconPath('m106.523 196.712');
+	if (byPath) {
+		return byPath;
+	}
+
+	// Fallback: Delete is always right before Report (warning-triangle icon)
+	const reportItem = findMenuItemByIconPath('M112.423 209.728');
+	return (reportItem?.previousElementSibling as HTMLElement | undefined) ?? undefined;
+}
+
 async function withConversationMenu(callback: () => void): Promise<void> {
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	let menuButton: HTMLElement | null = null;
-	const conversation = document.querySelector<HTMLElement>(selectors.selectedConversation)!.closest(`${selectors.conversationList} > div`);
+	const conversation = document.querySelector<HTMLElement>(selectors.selectedConversation)!.closest('[role=row]');
 
-	menuButton = conversation?.querySelector('[aria-label*="More options"][role=button]') ?? null;
+	// Find the menu button: the [role=button] whose parent has 'html-div' class (language-independent)
+	// The conversation row may have multiple [role=button] elements (e.g., "View profile" + "More options")
+	const buttons = conversation?.querySelectorAll<HTMLElement>('[role=button]');
+	menuButton = [...(buttons ?? [])].find(button => button.parentElement?.classList.contains('html-div')) ?? null;
 
 	if (menuButton) {
 		await withMenu(menuButton, callback);
@@ -633,16 +695,7 @@ async function withConversationMenu(callback: () => void): Promise<void> {
 
 async function openMuteModal(): Promise<void> {
 	await withConversationMenu(() => {
-		const menuItems = document.querySelectorAll<HTMLElement>(
-			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
-		);
-
-		for (const item of menuItems) {
-			if (item.textContent?.includes('Mute')) {
-				item.click();
-				break;
-			}
-		}
+		findMuteMenuItem()?.click();
 	});
 }
 
@@ -656,39 +709,23 @@ In other words, you should only use this function within a callback that is prov
 
 async function archiveSelectedConversation(): Promise<void> {
 	await withConversationMenu(() => {
-		const menuItems = document.querySelectorAll<HTMLElement>(
-			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
-		);
-
-		for (const item of menuItems) {
-			if (item.textContent?.includes('Archive')) {
-				item.click();
-				break;
-			}
-		}
+		// Archive has no unique SVG icon; find it as the sibling immediately before Delete
+		const archiveItem = findDeleteMenuItem()?.previousElementSibling as HTMLElement | undefined;
+		archiveItem?.click();
 	});
 }
 
 async function deleteSelectedConversation(): Promise<void> {
 	await withConversationMenu(() => {
-		const menuItems = document.querySelectorAll<HTMLElement>(
-			`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
-		);
-
-		for (const item of menuItems) {
-			if (item.textContent?.includes('Delete')) {
-				item.click();
-				break;
-			}
-		}
+		findDeleteMenuItem()?.click();
 	});
 }
 
 async function openPreferences(): Promise<void> {
-	await openSettingsMenuAndClickItem('Preferences', {
-		useExactMatch: false,
-		waitForSelector: selectors.preferencesSelector,
-	});
+	await openSettingsMenuAndClickItem(
+		{svgPathPrefix: 'm108.861 200.161'},
+		{waitForSelector: selectors.preferencesSelector},
+	);
 }
 
 function isPreferencesOpen(): boolean {
@@ -793,11 +830,34 @@ async function observeThemeBugs(): Promise<void> {
 // Listen for emoji element dom insertion
 document.addEventListener('animationstart', insertionListener, false);
 
+// Inject a CSS class on the messenger layout container to enable proper styling
+function injectMessengerLayoutClass(): void {
+	const threadListNavigation = document.querySelector('[role="navigation"]:has([role="grid"])');
+	threadListNavigation?.parentElement?.classList.add('caprine-thread-list-container');
+}
+
+// Observe for navigation changes and re-inject the class when needed
+function observeMessengerLayout(): void {
+	const observer = new MutationObserver(() => {
+		// Check if the class is missing but the navigation exists
+		const threadListNavigation = document.querySelector('[role="navigation"]:has([role="grid"])');
+		if (threadListNavigation?.parentElement && !threadListNavigation.parentElement.classList.contains('caprine-thread-list-container')) {
+			threadListNavigation.parentElement.classList.add('caprine-thread-list-container');
+		}
+	});
+
+	observer.observe(document.body, {childList: true, subtree: true});
+}
+
 // Inject a global style node to maintain custom appearance after conversation change or startup
 document.addEventListener('DOMContentLoaded', async () => {
 	const style = document.createElement('style');
 	style.id = 'zoomFactor';
 	document.body.append(style);
+
+	// Inject messenger layout class for proper padding and spacing
+	injectMessengerLayoutClass();
+	observeMessengerLayout();
 
 	// Set the zoom factor if it was set before quitting
 	const zoomFactor = await ipc.callMain<undefined, number>('get-config-zoomFactor');
@@ -903,7 +963,7 @@ window.addEventListener('dblclick', (event: Event) => {
 });
 
 function filenameFromMimeType(mimeType: string): string {
-	const ext: Record<string, string> = {
+	const extension: Record<string, string> = {
 		'application/pdf': 'file.pdf',
 		'image/jpeg': 'image.jpg',
 		'image/png': 'image.png',
@@ -913,7 +973,7 @@ function filenameFromMimeType(mimeType: string): string {
 		'application/zip': 'archive.zip',
 	};
 	const base = mimeType.split(';')[0]?.trim() ?? '';
-	return ext[base] ?? 'download';
+	return extension[base] ?? 'download';
 }
 
 // Handle links in chat area to open in OS default browser
@@ -968,8 +1028,8 @@ document.addEventListener('click', (event: MouseEvent) => {
 				const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
 				const filename
 					= link.getAttribute('download')
-					|| link.textContent?.trim()
-					|| filenameFromMimeType(contentType);
+					?? link.textContent?.trim()
+					?? filenameFromMimeType(contentType);
 				await ipc.callMain('save-blob-file', {data: arrayBuffer, filename});
 			} catch {}
 		})();

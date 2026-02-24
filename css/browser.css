@@ -67,7 +67,8 @@ body {
 }
 
 /* Add card-style margins and gaps around the messenger layout (matching messenger.com spacing) */
-div:has(> [role='navigation'][aria-label='Thread list']) {
+/* Note: Class is injected via JavaScript in source/browser.ts due to Chrome not supporting nested :has() */
+.caprine-thread-list-container {
 	padding: 16px !important;
 	box-sizing: border-box !important;
 	gap: 16px !important;
@@ -79,7 +80,7 @@ div:has(> [role='navigation'][aria-label='Thread list']) {
 }
 
 /* Round the conversation list container to match the chat container */
-[role='navigation'][aria-label='Thread list'] {
+[role='navigation']:has([role='grid']) {
 	border-radius: 8px !important;
 	overflow: hidden !important;
 	width: 360px !important;
