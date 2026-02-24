@@ -112,7 +112,8 @@
 			"!media${/*}"
 		],
 		"asarUnpack": [
-			"static/Icon.png"
+			"static/Icon.png",
+			"static/sounds/**/*"
 		],
 		"appId": "com.sindresorhus.caprine",
 		"mac": {

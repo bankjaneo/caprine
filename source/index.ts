@@ -1,5 +1,7 @@
 import path from 'node:path';
-import {readFileSync, existsSync} from 'node:fs';
+import {readFileSync, existsSync, promises as fs} from 'node:fs';
+import {exec} from 'node:child_process';
+import process from 'node:process';
 import {
 	app,
 	nativeImage,
@@ -13,7 +15,6 @@ import {
 	systemPreferences,
 	nativeTheme,
 } from 'electron';
-import process from 'node:process';
 import {ipcMain as ipc} from 'electron-better-ipc';
 import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
@@ -40,7 +41,7 @@ import {caprineIconPath} from './constants';
 ipc.setMaxListeners(100);
 
 electronDebug({
-	isEnabled: true, // TODO: This is only enabled to allow `Command+R` because messenger.com sometimes gets stuck after computer waking up
+	isEnabled: true, // TODO: This is only enabled to allow `Command+R` because facebook.com sometimes gets stuck after computer waking up
 	showDevTools: false,
 });
 
@@ -83,6 +84,34 @@ let previousMessageCount = 0;
 let dockMenu: Menu;
 let isDNDEnabled = false;
 
+function saveWindowState(): void {
+	if (!mainWindow) {
+		return;
+	}
+
+	const bounds = mainWindow.getNormalBounds();
+	const {isMaximized} = config.get('lastWindowState');
+
+	// Validate window dimensions - ensure they're at least minimum size
+	// This prevents saving corrupted/invalid window states on Linux
+	const validWidth = Math.max(bounds.width, 400);
+	const validHeight = Math.max(bounds.height, 200);
+
+	// Get the scale factor of the display where the window is located
+	// This is needed to handle HiDPI/fractional scaling on Linux
+	const display = electronScreen.getDisplayMatching(bounds);
+	const {scaleFactor} = display;
+
+	config.set('lastWindowState', {
+		x: bounds.x,
+		y: bounds.y,
+		width: validWidth,
+		height: validHeight,
+		isMaximized,
+		scaleFactor,
+	});
+}
+
 if (!app.requestSingleInstanceLock()) {
 	app.quit();
 }
@@ -106,10 +135,16 @@ app.on('ready', () => {
 });
 
 async function updateBadge(messageCount: number): Promise<void> {
-	if (!is.windows) {
-		if (config.get('showUnreadBadge') && !isDNDEnabled) {
-			app.badgeCount = messageCount;
+	// Close all notifications when all messages are read to clear GNOME dock badge
+	if (messageCount === 0 && notifications.size > 0) {
+		for (const [id, notification] of notifications) {
+			notification.close();
+			notifications.delete(id);
 		}
+	}
+
+	if (!is.windows) {
+		app.badgeCount = (config.get('showUnreadBadge') && !isDNDEnabled) ? messageCount : 0;
 
 		if (
 			is.macos
@@ -118,17 +153,23 @@ async function updateBadge(messageCount: number): Promise<void> {
 			&& previousMessageCount !== messageCount
 		) {
 			app.dock.bounce('informational');
-			previousMessageCount = messageCount;
 		}
 	}
 
 	if (!is.macos) {
-		if (config.get('showUnreadBadge')) {
-			tray.setBadge(messageCount > 0);
-		}
+		tray.setBadge(config.get('showUnreadBadge') ? messageCount > 0 : false);
 
 		if (config.get('flashWindowOnMessage')) {
-			mainWindow.flashFrame(messageCount !== 0);
+			// Only flash when there are new unread messages (count increased from previous)
+			// This prevents repeated flashing from DOM mutations without new messages
+			const hasNewMessages = messageCount > previousMessageCount;
+
+			if (hasNewMessages) {
+				mainWindow.flashFrame(true);
+			} else if (messageCount === 0) {
+				// Reset flash state when all messages are read
+				mainWindow.flashFrame(false);
+			}
 		}
 	}
 
@@ -142,6 +183,10 @@ async function updateBadge(messageCount: number): Promise<void> {
 			updateOverlayIcon(await ipc.callRenderer(mainWindow, 'render-overlay-icon', messageCount));
 		}
 	}
+
+	// Update previousMessageCount for next comparison
+	// This is used to detect new messages vs repeated DOM mutations
+	previousMessageCount = messageCount;
 }
 
 function updateOverlayIcon({data, text}: {data: string; text: string}): void {
@@ -237,7 +282,7 @@ function initRequestsFiltering(): void {
 function setUserLocale(): void {
 	const userLocale = bestFacebookLocaleFor(app.getLocale().replace('-', '_'));
 	const cookie = {
-		url: 'https://www.messenger.com/',
+		url: 'https://www.facebook.com/',
 		name: 'locale',
 		secure: true,
 		value: userLocale,
@@ -265,25 +310,54 @@ function createMainWindow(): BrowserWindow {
 	// Messenger or Work Chat
 	const mainURL = config.get('useWorkChat')
 		? 'https://work.facebook.com/chat'
-		: 'https://www.messenger.com/login/';
+		: 'https://www.facebook.com/messages/';
+
+	// Determine background color based on theme to prevent flash of white
+	const theme = config.get('theme');
+	const shouldUseDarkColors = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
+	const backgroundColor = shouldUseDarkColors ? '#1e1e1e' : undefined;
+
+	// Handle HiDPI/fractional scaling on Linux
+	// getNormalBounds() returns logical pixels (scaled by display scale factor)
+	// We need to convert saved logical pixels to physical pixels, then to current display's logical pixels
+	let windowWidth = lastWindowState.width;
+	let windowHeight = lastWindowState.height;
+
+	if (is.linux && lastWindowState.scaleFactor) {
+		// Get the display where the window will be created
+		const display = electronScreen.getDisplayNearestPoint({
+			x: lastWindowState.x ?? 0,
+			y: lastWindowState.y ?? 0,
+		});
+		const currentScaleFactor = display.scaleFactor;
+		const savedScaleFactor = lastWindowState.scaleFactor;
+
+		if (savedScaleFactor !== currentScaleFactor) {
+			// Convert: saved_logical * saved_scale / current_scale = current_logical
+			// This maintains the same physical pixel size
+			windowWidth = Math.round((windowWidth * savedScaleFactor) / currentScaleFactor);
+			windowHeight = Math.round((windowHeight * savedScaleFactor) / currentScaleFactor);
+		}
+	}
 
 	const win = new BrowserWindow({
 		title: app.name,
 		show: false,
 		x: lastWindowState.x,
 		y: lastWindowState.y,
-		width: lastWindowState.width,
-		height: lastWindowState.height,
+		width: windowWidth,
+		height: windowHeight,
 		icon: is.linux ? caprineIconPath : undefined,
 		minWidth: 400,
 		minHeight: 200,
 		alwaysOnTop: config.get('alwaysOnTop'),
 		titleBarStyle: 'hiddenInset',
 		trafficLightPosition: {
-			x: 80,
-			y: 20,
+			x: 18,
+			y: 16,
 		},
 		autoHideMenuBar: config.get('autoHideMenuBar'),
+		backgroundColor,
 		webPreferences: {
 			preload: path.join(__dirname, 'browser.js'),
 			contextIsolation: true,
@@ -351,8 +425,7 @@ function createMainWindow(): BrowserWindow {
 	});
 
 	win.on('resize', () => {
-		const {isMaximized} = config.get('lastWindowState');
-		config.set('lastWindowState', {...win.getNormalBounds(), isMaximized});
+		saveWindowState();
 	});
 
 	win.on('maximize', () => {
@@ -392,9 +465,9 @@ function createMainWindow(): BrowserWindow {
 			label: 'Mute Notifications',
 			type: 'checkbox',
 			visible: is.development,
-			checked: config.get('notificationsMuted'),
-			async click() {
-				setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications'));
+			checked: false,
+			async click(menuItem) {
+				setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications', {checked: menuItem.checked}));
 			},
 		};
 
@@ -518,11 +591,6 @@ function createMainWindow(): BrowserWindow {
 			});
 		}
 
-		// TODO: Re-enable this when muting notifications is fixed
-		// setNotificationsMute(await ipc.callRenderer(mainWindow, 'toggle-mute-notifications', {
-		// 	defaultStatus: config.get('notificationsMuted'),
-		// }));
-
 		ipc.callRenderer(mainWindow, 'toggle-message-buttons', config.get('showMessageButtons'));
 
 		await webContents.executeJavaScript(
@@ -569,14 +637,24 @@ function createMainWindow(): BrowserWindow {
 	});
 
 	webContents.on('will-navigate', async (event, url) => {
-		const isMessengerDotCom = (url: string): boolean => {
-			const {hostname} = new URL(url);
-			return hostname.endsWith('.messenger.com');
-		};
+		const isFacebookMessages = (url: string): boolean => {
+			const {hostname, pathname} = new URL(url);
+			if (hostname !== 'www.facebook.com' && hostname !== 'web.facebook.com') {
+				return false;
+			}
 
-		const isTwoFactorAuth = (url: string): boolean => {
-			const twoFactorAuthURL = 'https://www.facebook.com/checkpoint';
-			return url.startsWith(twoFactorAuthURL);
+			// Allow root path for login flow, but we'll redirect to /messages after
+			if (pathname === '/' || pathname === '') {
+				return true;
+			}
+
+			return (
+				pathname.startsWith('/messages')
+				|| pathname.startsWith('/login')
+				|| pathname.startsWith('/checkpoint')
+				|| pathname.startsWith('/two_step_verification')
+				|| pathname.startsWith('/logout')
+			);
 		};
 
 		const isWorkChat = (url: string): boolean => {
@@ -602,12 +680,23 @@ function createMainWindow(): BrowserWindow {
 			return false;
 		};
 
-		if (isMessengerDotCom(url) || isTwoFactorAuth(url) || isWorkChat(url)) {
+		if (isFacebookMessages(url) || isWorkChat(url)) {
 			return;
 		}
 
 		event.preventDefault();
 		await shell.openExternal(url);
+	});
+
+	// Redirect from Facebook homepage to /messages after login
+	webContents.on('did-navigate', (_event, url) => {
+		const {hostname, pathname} = new URL(url);
+		if ((hostname === 'www.facebook.com' || hostname === 'web.facebook.com') && (pathname === '/' || pathname === '')) {
+			// Redirect to messages page after a short delay to allow any login process to complete
+			setTimeout(() => {
+				webContents.loadURL('https://www.facebook.com/messages/');
+			}, 500);
+		}
 	});
 })();
 
@@ -640,6 +729,28 @@ ipc.answerRenderer('titlebar-doubleclick', () => {
 	}
 });
 
+ipc.answerRenderer('open-external', async (url: string) => {
+	await shell.openExternal(url);
+});
+
+ipc.answerRenderer('navigate-to-chats', () => {
+	mainWindow.webContents.loadURL('https://www.facebook.com/messages/');
+});
+
+ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
+	const downloadsDirectory = app.getPath('downloads');
+	let savePath = path.join(downloadsDirectory, filename);
+	let counter = 1;
+	const {name, ext} = path.parse(filename);
+	while (existsSync(savePath)) {
+		savePath = path.join(downloadsDirectory, `${name} (${counter})${ext}`);
+		counter++;
+	}
+
+	await fs.writeFile(savePath, Buffer.from(data));
+	shell.showItemInFolder(savePath);
+});
+
 app.on('activate', () => {
 	if (mainWindow) {
 		mainWindow.show();
@@ -649,17 +760,26 @@ app.on('activate', () => {
 app.on('before-quit', () => {
 	isQuitting = true;
 
-	// Checking whether the window exists to work around an Electron race issue:
-	// https://github.com/sindresorhus/caprine/issues/809
-	if (mainWindow) {
-		const {isMaximized} = config.get('lastWindowState');
-		config.set('lastWindowState', {...mainWindow.getNormalBounds(), isMaximized});
-	}
+	// Save window state before quitting
+	saveWindowState();
 
 	if (is.windows) {
 		app.setJumpList([]);
 	}
 });
+
+// Handle Linux shutdown signals - SIGTERM is sent during logout/shutdown
+if (is.linux) {
+	process.on('SIGTERM', () => {
+		saveWindowState();
+		app.quit();
+	});
+
+	process.on('SIGHUP', () => {
+		saveWindowState();
+		app.quit();
+	});
+}
 
 const notifications = new Map();
 
@@ -671,12 +791,23 @@ ipc.answerRenderer(
 			return;
 		}
 
+		// Close existing notification with the same ID if present (prevents duplicates on GNOME/Linux)
+		if (notifications.has(id)) {
+			notifications.get(id).close();
+			notifications.delete(id);
+		}
+
+		// Skip notification if notifications are muted
+		if (config.get('notificationsMuted')) {
+			return;
+		}
+
 		const notification = new Notification({
 			title,
 			body: config.get('notificationMessagePreview') ? body : 'You have a new message',
 			hasReply: true,
 			icon: nativeImage.createFromDataURL(icon),
-			silent,
+			silent: silent || is.linux || is.macos,
 		});
 
 		notifications.set(id, notification);
@@ -698,6 +829,24 @@ ipc.answerRenderer(
 			sendBackgroundAction('notification-callback', {callbackName: 'onclose', id});
 			notifications.delete(id);
 		});
+
+		if (!silent) {
+			const appPath = app.getAppPath();
+			const isAsar = appPath.includes('.asar');
+			const basePath = isAsar ? appPath.replace('.asar', '.asar.unpacked') : appPath;
+			const soundPath = path.join(basePath, 'static', 'sounds', 'messenger-notification.mp3');
+
+			if (is.macos) {
+				// On macOS, use afplay with the custom sound file
+				exec(`afplay "${soundPath}"`);
+			} else if (is.linux) {
+				// On Linux, try GStreamer (most universal), then PulseAudio/paplay, then ALSA/aplay
+				exec(`gst-play-1.0 --no-interactive --quiet "${soundPath}" 2>/dev/null || paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}"`);
+			} else if (is.windows) {
+				// On Windows, use PowerShell with Windows Media Player
+				exec(`powershell -c Add-Type -AssemblyName presentationCore; $player = New-Object system.windows.media.mediaplayer; $player.open('${soundPath}'); $player.Play(); Start-Sleep -s $player.NaturalDuration.TimeSpan.TotalSeconds`);
+			}
+		}
 
 		notification.show();
 	},

@@ -14,6 +14,7 @@ export type StoreType = {
 		width: number;
 		height: number;
 		isMaximized: boolean;
+		scaleFactor: number;
 	};
 	menuBarMode: boolean;
 	showDockIcon: boolean;
@@ -89,6 +90,9 @@ const schema: Store.Schema<StoreType> = {
 			isMaximized: {
 				type: 'boolean',
 			},
+			scaleFactor: {
+				type: 'number',
+			},
 		},
 		default: {
 			x: undefined,
@@ -96,6 +100,7 @@ const schema: Store.Schema<StoreType> = {
 			width: 800,
 			height: 600,
 			isMaximized: false,
+			scaleFactor: 1,
 		},
 	},
 	menuBarMode: {
