@@ -6,6 +6,3 @@ export type IToggleMuteNotifications = {
 	checked: boolean;
 };
 
-export type JumpToConversation = {
-	conversationIndex: number;
-};

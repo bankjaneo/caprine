@@ -807,7 +807,7 @@ ipc.answerRenderer(
 			body: config.get('notificationMessagePreview') ? body : 'You have a new message',
 			hasReply: true,
 			icon: nativeImage.createFromDataURL(icon),
-			silent: silent || is.linux || is.macos,
+			silent: silent || is.linux || is.macos || is.windows,
 		});
 
 		notifications.set(id, notification);
