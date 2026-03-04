@@ -295,6 +295,12 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
+		// Skip notifications for muted conversations (exclude from popup/badge/sound)
+		const isMuted = Boolean(current.querySelector(selectors.mutedConversation));
+		if (isMuted) {
+			continue;
+		}
+
 		alreadyChecked.push(href);
 
 		// Get the icon data URI (set by createConversationList via createIcons).
@@ -353,6 +359,13 @@ function getUnreadCount(): number {
 
 	for (const row of rows) {
 		if (isUnreadConversation(row)) {
+			// Skip muted conversations from badge count
+			const isMuted = Boolean(row.querySelector(selectors.mutedConversation));
+
+			if (isMuted) {
+				continue;
+			}
+
 			count++;
 		}
 	}
