@@ -399,6 +399,7 @@ function updateTrayIcon(): void {
 	}
 
 	ipc.callMain('update-tray-icon', currentBadgeCount);
+	ipc.callMain('update-titlebar-count', currentBadgeCount);
 }
 
 // Poll for badge updates to ensure it stays in sync

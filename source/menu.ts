@@ -309,6 +309,14 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
+			label: 'Show Unread Count on Titlebar',
+			type: 'checkbox',
+			checked: config.get('showUnreadCountOnTitlebar'),
+			click() {
+				config.set('showUnreadCountOnTitlebar', !config.get('showUnreadCountOnTitlebar'));
+			},
+		},
+		{
 			label: 'Spell Checker',
 			type: 'checkbox',
 			checked: config.get('isSpellCheckerEnabled'),
