@@ -239,15 +239,31 @@ function generateStringFromNode(element: Element): string | undefined {
 	return cloneElement.textContent ?? undefined;
 }
 
-function processConversation(
-	href: string,
-	titleText: string,
-	bodyText: string | undefined,
-	imgUrl: string,
-): void {
+function isOutgoingMessage(element?: HTMLElement): boolean {
+	if (!element) {
+		return false;
+	}
+
+	// Outgoing messages in Facebook's DOM have a child element with
+	// data-visualcompletion="ignore" attribute
+	// This is a language-independent way to identify outgoing messages
+	return element.dataset.visualcompletion === 'ignore';
+}
+
+type ConversationNotification = {
+	href: string;
+	titleText: string;
+	bodyText: string | undefined;
+	imgUrl: string;
+	bodyTextElement?: HTMLElement;
+};
+
+function processConversation(notification: ConversationNotification): void {
+	const {href, titleText, bodyText, imgUrl, bodyTextElement} = notification;
+
 	// Skip outgoing messages - only notify for incoming messages
-	// Outgoing messages are marked with "You: [text]" or "You sent [type]"
-	if (bodyText && (bodyText.startsWith('You: ') || bodyText.startsWith('You sent'))) {
+	// Use DOM attribute check instead of text content to support all languages
+	if (isOutgoingMessage(bodyTextElement)) {
 		return;
 	}
 
@@ -345,13 +361,20 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		const imgUrl = current.querySelector('img')?.dataset.caprineIcon;
 		const textOptions = current.querySelectorAll<HTMLElement>(selectors.conversationSidebarTextSelector);
 		const titleText = generateStringFromNode(textOptions[0]);
-		const bodyText = textOptions[1] ? generateStringFromNode(textOptions[1]) : undefined;
+		const bodyTextElement = textOptions[1] as HTMLElement | undefined;
+		const bodyText = bodyTextElement ? generateStringFromNode(bodyTextElement) : undefined;
 
 		if (!titleText || !imgUrl) {
 			continue;
 		}
 
-		processConversation(href, titleText, bodyText, imgUrl);
+		processConversation({
+			href,
+			titleText,
+			bodyText,
+			imgUrl,
+			bodyTextElement,
+		});
 	}
 }
 
