@@ -239,6 +239,44 @@ function generateStringFromNode(element: Element): string | undefined {
 	return cloneElement.textContent ?? undefined;
 }
 
+function processConversation(
+	href: string,
+	titleText: string,
+	bodyText: string | undefined,
+	imgUrl: string,
+): void {
+	// Skip outgoing messages - only notify for incoming messages
+	// Outgoing messages are marked with "You: [text]" or "You sent [type]"
+	if (bodyText && (bodyText.startsWith('You: ') || bodyText.startsWith('You sent'))) {
+		return;
+	}
+
+	// Generate conversation ID for notification tracking
+	const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
+
+	// Track last notified content per conversation to prevent DOM mutation repeats
+	// New messages with different content will still notify immediately
+	const currentContent = bodyText ?? '';
+	const lastContent = lastNotifiedContent.get(href);
+
+	// Only skip if content is exactly the same (DOM mutation duplicate)
+	if (lastContent === currentContent) {
+		return;
+	}
+
+	// Track this conversation's latest content
+	lastNotifiedContent.set(href, currentContent);
+
+	// Send a notification
+	ipc.callMain('notification', {
+		id: conversationId,
+		title: titleText,
+		body: bodyText ?? 'New message',
+		icon: imgUrl,
+		silent: false,
+	});
+}
+
 function countUnread(mutationsList: MutationRecord[]): void {
 	const alreadyChecked: string[] = [];
 
@@ -313,30 +351,7 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
-		// Generate conversation ID for notification tracking
-		const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
-
-		// Track last notified content per conversation to prevent DOM mutation repeats
-		// New messages with different content will still notify immediately
-		const currentContent = bodyText ?? '';
-		const lastContent = lastNotifiedContent.get(href);
-
-		// Only skip if content is exactly the same (DOM mutation duplicate)
-		if (lastContent === currentContent) {
-			continue;
-		}
-
-		// Track this conversation's latest content
-		lastNotifiedContent.set(href, currentContent);
-
-		// Send a notification
-		ipc.callMain('notification', {
-			id: conversationId,
-			title: titleText,
-			body: bodyText ?? 'New message',
-			icon: imgUrl,
-			silent: false,
-		});
+		processConversation(href, titleText, bodyText, imgUrl);
 	}
 }
 
