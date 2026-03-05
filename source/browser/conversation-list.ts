@@ -239,6 +239,60 @@ function generateStringFromNode(element: Element): string | undefined {
 	return cloneElement.textContent ?? undefined;
 }
 
+function isOutgoingMessage(element?: HTMLElement): boolean {
+	if (!element) {
+		return false;
+	}
+
+	// Outgoing messages in Facebook's DOM have a child element with
+	// data-visualcompletion="ignore" attribute
+	// This is a language-independent way to identify outgoing messages
+	return element.dataset.visualcompletion === 'ignore';
+}
+
+type ConversationNotification = {
+	href: string;
+	titleText: string;
+	bodyText: string | undefined;
+	imgUrl: string;
+	bodyTextElement?: HTMLElement;
+};
+
+function processConversation(notification: ConversationNotification): void {
+	const {href, titleText, bodyText, imgUrl, bodyTextElement} = notification;
+
+	// Skip outgoing messages - only notify for incoming messages
+	// Use DOM attribute check instead of text content to support all languages
+	if (isOutgoingMessage(bodyTextElement)) {
+		return;
+	}
+
+	// Generate conversation ID for notification tracking
+	const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
+
+	// Track last notified content per conversation to prevent DOM mutation repeats
+	// New messages with different content will still notify immediately
+	const currentContent = bodyText ?? '';
+	const lastContent = lastNotifiedContent.get(href);
+
+	// Only skip if content is exactly the same (DOM mutation duplicate)
+	if (lastContent === currentContent) {
+		return;
+	}
+
+	// Track this conversation's latest content
+	lastNotifiedContent.set(href, currentContent);
+
+	// Send a notification
+	ipc.callMain('notification', {
+		id: conversationId,
+		title: titleText,
+		body: bodyText ?? 'New message',
+		icon: imgUrl,
+		silent: false,
+	});
+}
+
 function countUnread(mutationsList: MutationRecord[]): void {
 	const alreadyChecked: string[] = [];
 
@@ -307,35 +361,19 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		const imgUrl = current.querySelector('img')?.dataset.caprineIcon;
 		const textOptions = current.querySelectorAll<HTMLElement>(selectors.conversationSidebarTextSelector);
 		const titleText = generateStringFromNode(textOptions[0]);
-		const bodyText = textOptions[1] ? generateStringFromNode(textOptions[1]) : undefined;
+		const bodyTextElement = textOptions[1] as HTMLElement | undefined;
+		const bodyText = bodyTextElement ? generateStringFromNode(bodyTextElement) : undefined;
 
 		if (!titleText || !imgUrl) {
 			continue;
 		}
 
-		// Generate conversation ID for notification tracking
-		const conversationId = [...href].reduce((hash, char) => ((hash * 31) + char.codePointAt(0)!) % 2_147_483_647, 0);
-
-		// Track last notified content per conversation to prevent DOM mutation repeats
-		// New messages with different content will still notify immediately
-		const currentContent = bodyText ?? '';
-		const lastContent = lastNotifiedContent.get(href);
-
-		// Only skip if content is exactly the same (DOM mutation duplicate)
-		if (lastContent === currentContent) {
-			continue;
-		}
-
-		// Track this conversation's latest content
-		lastNotifiedContent.set(href, currentContent);
-
-		// Send a notification
-		ipc.callMain('notification', {
-			id: conversationId,
-			title: titleText,
-			body: bodyText ?? 'New message',
-			icon: imgUrl,
-			silent: false,
+		processConversation({
+			href,
+			titleText,
+			bodyText,
+			imgUrl,
+			bodyTextElement,
 		});
 	}
 }
