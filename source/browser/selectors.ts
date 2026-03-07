@@ -32,7 +32,5 @@ export default {
 		'[aria-label]:not([role=button]):not([role=menu]):not([role=navigation])',
 	],
 	preferencesSelector: '[role="dialog"]:has(h2)',
-	// TODO: Fix this selector for new design
-	messengerSoundsSelector: '._374d ._6bkz',
 	conversationMenuSelectorNewDesign: '[role=menu]',
 };

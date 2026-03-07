@@ -206,7 +206,7 @@ async function openHiddenPreferences(): Promise<boolean> {
 async function toggleSounds({checked}: IToggleSounds): Promise<void> {
 	const shouldClosePreferences = await openHiddenPreferences();
 
-	const soundsCheckbox = document.querySelector<HTMLInputElement>(`${selectors.preferencesSelector} ${selectors.messengerSoundsSelector}`)!;
+	const soundsCheckbox = document.querySelector<HTMLInputElement>(selectors.notificationCheckbox)!;
 	if (checked === undefined || checked !== soundsCheckbox.checked) {
 		soundsCheckbox.click();
 	}
