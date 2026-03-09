@@ -12,7 +12,6 @@ import {toggleMenuBarMode} from './menu-bar-mode';
 
 let tray: Tray | undefined;
 let previousMessageCount = 0;
-let hasUnreadMessages = false;
 
 let contextMenu: Menu;
 
@@ -128,19 +127,14 @@ export default {
 
 		const shouldShowUnread = messageCount > 0;
 
-		if (shouldShowUnread && !hasUnreadMessages) {
-			hasUnreadMessages = true;
-			tray.setImage(getIconPath(true));
-			updateToolTip(messageCount);
+		const currentHasUnread = previousMessageCount > 0;
+		if (shouldShowUnread === currentHasUnread && messageCount === previousMessageCount) {
 			return;
 		}
 
-		if (messageCount !== previousMessageCount || shouldShowUnread !== hasUnreadMessages) {
-			previousMessageCount = messageCount;
-			hasUnreadMessages = shouldShowUnread;
-			tray.setImage(getIconPath(shouldShowUnread));
-			updateToolTip(messageCount);
-		}
+		previousMessageCount = messageCount;
+		tray.setImage(getIconPath(shouldShowUnread));
+		updateToolTip(messageCount);
 	},
 
 	setBadge(shouldDisplayUnread: boolean) {
