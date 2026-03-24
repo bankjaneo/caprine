@@ -162,10 +162,6 @@ function isUnreadConversation(element: HTMLElement): boolean {
 
 async function createConversationNewDesign(element: HTMLElement): Promise<Conversation> {
 	const conversation: Partial<Conversation> = {};
-	// TODO: Exclude muted conversations
-	/*
-	const muted = Boolean(element.querySelector(selectors.muteIconNewDesign));
-	*/
 
 	conversation.selected = Boolean(element.querySelector('[role=row] [role=link] > div:only-child'));
 	conversation.unread = isUnreadConversation(element);
