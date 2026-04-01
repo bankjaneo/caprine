@@ -668,7 +668,7 @@ function findMuteMenuItem(): HTMLElement | undefined {
 
 /** Finds the Delete menu item: SVG path first, fallback via Report item anchor. */
 function findDeleteMenuItem(): HTMLElement | undefined {
-	const byPath = findMenuItemByIconPath('m106.523 196.712');
+	const byPath = findMenuItemByIconPath('M8.75');
 	if (byPath) {
 		return byPath;
 	}
@@ -723,7 +723,7 @@ async function deleteSelectedConversation(): Promise<void> {
 
 async function openPreferences(): Promise<void> {
 	await openSettingsMenuAndClickItem(
-		{svgPathPrefix: 'm108.861 200.161'},
+		{svgPathPrefix: 'M10 5.75'},
 		{waitForSelector: selectors.preferencesSelector},
 	);
 }
