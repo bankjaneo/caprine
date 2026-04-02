@@ -78,11 +78,7 @@ Caprine is an unofficial and privacy focused Facebook Messenger desktop app.
 
 %install
 mkdir -p %{buildroot}/opt/Caprine
-if [ "$ARCH" = "arm64" ]; then
-	cp -r $PROJECT_DIR/dist/linux-arm64-unpacked/* %{buildroot}/opt/Caprine/
-else
-	cp -r $PROJECT_DIR/dist/linux-unpacked/* %{buildroot}/opt/Caprine/
-fi
+cp -r $DIST_DIR/* %{buildroot}/opt/Caprine/
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/16x16/apps
 install -m 644 $PROJECT_DIR/build/icons/16x16.png %{buildroot}/usr/share/icons/hicolor/16x16/apps/caprine.png
@@ -132,15 +128,9 @@ EOF
 
 	rpmbuild -bb "$SPEC_FILE" --target "$TARGET_ARCH"
 
-	if [ "$ARCH" = "arm64" ]; then
-		cp ~/rpmbuild/RPMS/arm64/caprine-*.rpm "$PROJECT_DIR/dist/"
-		mv "$PROJECT_DIR/dist/caprine-$VERSION-1.arm64.rpm" "$PROJECT_DIR/dist/caprine-$VERSION-arm64.rpm"
-		echo "RPM package built successfully: dist/caprine-$VERSION-arm64.rpm"
-	else
-		cp ~/rpmbuild/RPMS/x86_64/caprine-*.rpm "$PROJECT_DIR/dist/"
-		mv "$PROJECT_DIR/dist/caprine-$VERSION-1.x86_64.rpm" "$PROJECT_DIR/dist/caprine-$VERSION-x86_64.rpm"
-		echo "RPM package built successfully: dist/caprine-$VERSION-x86_64.rpm"
-	fi
+	cp "$HOME/rpmbuild/RPMS/$TARGET_ARCH/caprine-*.rpm" "$PROJECT_DIR/dist/"
+	mv "$PROJECT_DIR/dist/caprine-*.$TARGET_ARCH.rpm" "$PROJECT_DIR/dist/caprine-$VERSION-$ARCH.rpm"
+	echo "RPM package built successfully: dist/caprine-$VERSION-$ARCH.rpm"
 }
 
 # Build RPM(s) for specified architecture/ies
