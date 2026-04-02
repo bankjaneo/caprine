@@ -152,13 +152,26 @@
 		},
 		"linux": {
 			"target": [
-				"AppImage",
-				"deb"
+				{
+					"target": "AppImage",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				},
+				{
+					"target": "deb",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
 			],
 			"icon": "build/icons/",
 			"synopsis": "Elegant Facebook Messenger desktop app",
-			"description": "Caprine is an unofficial and privacy focused Facebook Messenger app with many useful features.",
-			"category": "Network;Chat"
+			"description": "Caprine is an unofficial and privacy focused Facebook Messenger desktop app with many useful features.",
+			"category": "Network;Chat",
+			"artifactName": "${productName}-${version}-${arch}.${ext}"
 		},
 		"snap": {
 			"plugs": [
@@ -180,12 +193,22 @@
 		},
 		"win": {
 			"verifyUpdateCodeSignature": false,
-			"icon": "build/icon.png"
+			"icon": "build/icon.png",
+			"target": [
+				{
+					"target": "nsis",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
+			]
 		},
 		"nsis": {
 			"oneClick": false,
 			"perMachine": false,
-			"allowToChangeInstallationDirectory": true
+			"allowToChangeInstallationDirectory": true,
+			"artifactName": "${productName}-${version}-${arch}.${ext}"
 		}
 	},
 	"husky": {
