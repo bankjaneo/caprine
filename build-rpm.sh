@@ -78,28 +78,28 @@ Caprine is an unofficial and privacy focused Facebook Messenger desktop app.
 
 %install
 mkdir -p %{buildroot}/opt/Caprine
-cp -r $DIST_DIR/* %{buildroot}/opt/Caprine/
+cp -r "$DIST_DIR"/* %{buildroot}/opt/Caprine/
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/16x16/apps
-install -m 644 $PROJECT_DIR/build/icons/16x16.png %{buildroot}/usr/share/icons/hicolor/16x16/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/16x16.png %{buildroot}/usr/share/icons/hicolor/16x16/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/32x32/apps
-install -m 644 $PROJECT_DIR/build/icons/32x32.png %{buildroot}/usr/share/icons/hicolor/32x32/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/32x32.png %{buildroot}/usr/share/icons/hicolor/32x32/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/48x48/apps
-install -m 644 $PROJECT_DIR/build/icons/48x48.png %{buildroot}/usr/share/icons/hicolor/48x48/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/48x48.png %{buildroot}/usr/share/icons/hicolor/48x48/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/64x64/apps
-install -m 644 $PROJECT_DIR/build/icons/64x64.png %{buildroot}/usr/share/icons/hicolor/64x64/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/64x64.png %{buildroot}/usr/share/icons/hicolor/64x64/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/128x128/apps
-install -m 644 $PROJECT_DIR/build/icons/128x128.png %{buildroot}/usr/share/icons/hicolor/128x128/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/128x128.png %{buildroot}/usr/share/icons/hicolor/128x128/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/256x256/apps
-install -m 644 $PROJECT_DIR/build/icons/256x256.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/256x256.png %{buildroot}/usr/share/icons/hicolor/256x256/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/icons/hicolor/512x512/apps
-install -m 644 $PROJECT_DIR/build/icons/512x512.png %{buildroot}/usr/share/icons/hicolor/512x512/apps/caprine.png
+install -m 644 "$PROJECT_DIR"/build/icons/512x512.png %{buildroot}/usr/share/icons/hicolor/512x512/apps/caprine.png
 
 mkdir -p %{buildroot}/usr/share/applications
 cat > %{buildroot}/usr/share/applications/caprine.desktop << 'DESKTOP_EOF'
@@ -128,8 +128,8 @@ EOF
 
 	rpmbuild -bb "$SPEC_FILE" --target "$TARGET_ARCH"
 
-	cp "$HOME/rpmbuild/RPMS/$TARGET_ARCH/caprine-*.rpm" "$PROJECT_DIR/dist/"
-	mv "$PROJECT_DIR/dist/caprine-*.$TARGET_ARCH.rpm" "$PROJECT_DIR/dist/caprine-$VERSION-$ARCH.rpm"
+	cp "$HOME/rpmbuild/RPMS/$TARGET_ARCH"/caprine-*.rpm "$PROJECT_DIR/dist/"
+	mv "$PROJECT_DIR/dist"/caprine-*."$TARGET_ARCH".rpm "$PROJECT_DIR/dist/caprine-$VERSION-$ARCH.rpm"
 	echo "RPM package built successfully: dist/caprine-$VERSION-$ARCH.rpm"
 }
 
