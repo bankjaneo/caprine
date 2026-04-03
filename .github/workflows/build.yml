@@ -38,10 +38,15 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
       - name: Package Caprine for macOS
         if: startsWith(matrix.os, 'macos')
-        run: npm run dist:mac
+        run: |
+          if [ -n "${{ secrets.CSC_LINK }}" ]; then
+            export CSC_LINK="${{ secrets.CSC_LINK }}"
+            export CSC_KEY_PASSWORD="${{ secrets.CSC_KEY_PASSWORD }}"
+          else
+            export CSC_IDENTITY_AUTO_DISCOVERY=false
+          fi
+          npm run dist:mac
         env:
-          CSC_LINK: ${{ secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package Caprine for Windows
         if: startsWith(matrix.os, 'windows')
