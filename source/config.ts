@@ -23,6 +23,7 @@ export type StoreType = {
 	showAlwaysOnTopPrompt: boolean;
 	bounceDockOnMessage: boolean;
 	showUnreadBadge: boolean;
+	showUnreadCountOnTitlebar: boolean;
 	showMessageButtons: boolean;
 	launchMinimized: boolean;
 	flashWindowOnMessage: boolean;
@@ -130,6 +131,10 @@ const schema: Store.Schema<StoreType> = {
 	showUnreadBadge: {
 		type: 'boolean',
 		default: true,
+	},
+	showUnreadCountOnTitlebar: {
+		type: 'boolean',
+		default: false,
 	},
 	showMessageButtons: {
 		type: 'boolean',

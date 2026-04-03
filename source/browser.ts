@@ -134,7 +134,7 @@ async function openSearchInConversation() {
 	}
 
 	// Click the Search button in the right panel (SVG path, language-independent)
-	document.querySelector<HTMLElement>('[role=button]:has(path[d^="m104.609 929.891"])')?.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M7.5 1"])')?.click();
 }
 
 ipc.answerMain('search', () => {
@@ -142,7 +142,7 @@ ipc.answerMain('search', () => {
 });
 
 ipc.answerMain('insert-gif', () => {
-	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M460.25 1079"])')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M7.695"])')!.click();
 });
 
 ipc.answerMain('insert-emoji', async () => {
@@ -150,11 +150,11 @@ ipc.answerMain('insert-emoji', async () => {
 });
 
 ipc.answerMain('insert-sticker', () => {
-	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M106.617 923.049"])')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M8.305"])')!.click();
 });
 
 ipc.answerMain('attach-files', () => {
-	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M99.825 918.322"])')!.click();
+	document.querySelector<HTMLElement>('[role=button]:has(path[d^="M7 4.25"])')!.click();
 });
 
 ipc.answerMain('focus-text-input', () => {
@@ -206,7 +206,7 @@ async function openHiddenPreferences(): Promise<boolean> {
 async function toggleSounds({checked}: IToggleSounds): Promise<void> {
 	const shouldClosePreferences = await openHiddenPreferences();
 
-	const soundsCheckbox = document.querySelector<HTMLInputElement>(`${selectors.preferencesSelector} ${selectors.messengerSoundsSelector}`)!;
+	const soundsCheckbox = document.querySelector<HTMLInputElement>(selectors.notificationCheckbox)!;
 	if (checked === undefined || checked !== soundsCheckbox.checked) {
 		soundsCheckbox.click();
 	}
@@ -668,7 +668,7 @@ function findMuteMenuItem(): HTMLElement | undefined {
 
 /** Finds the Delete menu item: SVG path first, fallback via Report item anchor. */
 function findDeleteMenuItem(): HTMLElement | undefined {
-	const byPath = findMenuItemByIconPath('m106.523 196.712');
+	const byPath = findMenuItemByIconPath('M8.75');
 	if (byPath) {
 		return byPath;
 	}
@@ -723,7 +723,7 @@ async function deleteSelectedConversation(): Promise<void> {
 
 async function openPreferences(): Promise<void> {
 	await openSettingsMenuAndClickItem(
-		{svgPathPrefix: 'm108.861 200.161'},
+		{svgPathPrefix: 'M10 5.75'},
 		{waitForSelector: selectors.preferencesSelector},
 	);
 }

@@ -194,6 +194,14 @@ function updateOverlayIcon({data, text}: {data: string; text: string}): void {
 	mainWindow.setOverlayIcon(img, text);
 }
 
+function updateTitlebar(messageCount: number): void {
+	if (!config.get('showUnreadCountOnTitlebar') || messageCount === 0) {
+		mainWindow.setTitle(app.name);
+	} else {
+		mainWindow.setTitle(`(${messageCount}) ${app.name}`);
+	}
+}
+
 type BeforeSendHeadersResponse = {
 	cancel?: boolean;
 	requestHeaders?: Record<string, string>;
@@ -536,13 +544,18 @@ function createMainWindow(): BrowserWindow {
 		updateBadge(messageCount);
 	});
 
+	// Update titlebar on unread count change
+	ipc.answerRenderer('update-titlebar-count', (messageCount: number) => {
+		updateTitlebar(messageCount);
+	});
+
 	enableHiresResources();
 
 	const {webContents} = mainWindow;
 
 	webContents.on('dom-ready', async () => {
-		// Set window title to Caprine
-		mainWindow.setTitle(app.name);
+		// Set window title to Caprine (or with unread count if feature enabled)
+		updateTitlebar(previousMessageCount);
 
 		await updateAppMenu();
 

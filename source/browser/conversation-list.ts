@@ -162,10 +162,6 @@ function isUnreadConversation(element: HTMLElement): boolean {
 
 async function createConversationNewDesign(element: HTMLElement): Promise<Conversation> {
 	const conversation: Partial<Conversation> = {};
-	// TODO: Exclude muted conversations
-	/*
-	const muted = Boolean(element.querySelector(selectors.muteIconNewDesign));
-	*/
 
 	conversation.selected = Boolean(element.querySelector('[role=row] [role=link] > div:only-child'));
 	conversation.unread = isUnreadConversation(element);
@@ -295,6 +291,12 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
+		// Skip notifications for muted conversations (exclude from popup/badge/sound)
+		const isMuted = Boolean(current.querySelector(selectors.mutedConversation));
+		if (isMuted) {
+			continue;
+		}
+
 		alreadyChecked.push(href);
 
 		// Get the icon data URI (set by createConversationList via createIcons).
@@ -353,6 +355,13 @@ function getUnreadCount(): number {
 
 	for (const row of rows) {
 		if (isUnreadConversation(row)) {
+			// Skip muted conversations from badge count
+			const isMuted = Boolean(row.querySelector(selectors.mutedConversation));
+
+			if (isMuted) {
+				continue;
+			}
+
 			count++;
 		}
 	}
@@ -386,6 +395,7 @@ function updateTrayIcon(): void {
 	}
 
 	ipc.callMain('update-tray-icon', currentBadgeCount);
+	ipc.callMain('update-titlebar-count', currentBadgeCount);
 }
 
 // Poll for badge updates to ensure it stays in sync
