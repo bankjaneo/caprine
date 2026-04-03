@@ -33,6 +33,10 @@ jobs:
           source: ${{ github.ref_name }}
           find: v
           replace: ''
+      - name: Ensure GitHub Release exists
+        run: gh release create "${{ github.ref_name }}" --title "${{ github.ref_name }}" --generate-notes --repo "${{ github.repository }}" || true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Snapcraft
         uses: samuelmeuli/action-snapcraft@v1
         if: startsWith(matrix.os, 'ubuntu')
@@ -45,19 +49,34 @@ jobs:
           else
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
-          npm run dist:mac
+          npm run dist:mac -- --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload macOS artifacts to GitHub Release
+        if: startsWith(matrix.os, 'macos')
+        run: gh release upload "${{ github.ref_name }}" dist/*.dmg dist/*.zip --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package Caprine for Windows
         if: startsWith(matrix.os, 'windows')
-        run: npm run dist:win
+        run: npm run dist:win -- --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Windows artifacts to GitHub Release
+        if: startsWith(matrix.os, 'windows')
+        run: gh release upload "${{ github.ref_name }}" dist/*.exe --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package Caprine for Linux
         if: startsWith(matrix.os, 'ubuntu')
-        run: npm run dist:linux
+        run: npm run dist:linux -- --publish never
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.snapcraft_token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload Linux artifacts to GitHub Release
+        if: startsWith(matrix.os, 'ubuntu')
+        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb --clobber --repo "${{ github.repository }}"
+        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build RPM packages (x86_64 and arm64)
         if: startsWith(matrix.os, 'ubuntu')
@@ -65,8 +84,7 @@ jobs:
           bash build-rpm.sh
       - name: Upload RPM packages to GitHub Releases
         if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          gh release upload "${{ steps.release_tag.outputs.value }}" dist/*.rpm --repo "${{ github.repository }}"
+        run: gh release upload "${{ github.ref_name }}" dist/*.rpm --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload x64 deb to Gemfury
