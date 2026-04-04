@@ -11,11 +11,11 @@ jobs:
   npm-cache:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
@@ -23,11 +23,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: npm-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: Compile TypeScript
         run: |
@@ -37,11 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: npm-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: Lint source code
         run: |
@@ -51,11 +51,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: npm-cache
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: Lint styles
         run: |
@@ -64,7 +64,7 @@ jobs:
   rpmspec:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Lint rpm spec file
         uses: EyeCantCU/rpmlint-action@v0.1.1
         with:

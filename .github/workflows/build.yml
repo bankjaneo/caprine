@@ -3,6 +3,8 @@ on:
   push:
     tags:
       - '*'
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 jobs:
   tests:
     uses: ./.github/workflows/tests.yml
@@ -16,11 +18,11 @@ jobs:
           - ubuntu-latest
           - windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 24
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
@@ -89,7 +91,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload x64 deb to Gemfury
         if: startsWith(matrix.os, 'ubuntu')
-        run: curl -F package=@dist/caprine_${{ steps.release_tag.outputs.value }}_amd64.deb https://${{ secrets.gemfury_token }}@push.fury.io/lefterisgar/
+        run: |
+          deb_file=$(ls dist/Caprine-*-amd64.deb 2>/dev/null | head -1)
+          if [ -z "$deb_file" ]; then
+            echo "Error: No amd64 deb file found"
+            exit 1
+          fi
+          curl -F package=@$deb_file https://${{ secrets.gemfury_token }}@push.fury.io/wdis/
       - name: Upload ARM64 deb to Gemfury
         if: startsWith(matrix.os, 'ubuntu')
-        run: curl -F package=@dist/caprine_${{ steps.release_tag.outputs.value }}_arm64.deb https://${{ secrets.gemfury_token }}@push.fury.io/lefterisgar/
+        run: |
+          deb_file=$(ls dist/Caprine-*-arm64.deb 2>/dev/null | head -1)
+          if [ -z "$deb_file" ]; then
+            echo "Error: No arm64 deb file found"
+            exit 1
+          fi
+          curl -F package=@$deb_file https://${{ secrets.gemfury_token }}@push.fury.io/wdis/
