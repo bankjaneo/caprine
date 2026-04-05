@@ -496,7 +496,7 @@ Press Command/Ctrl+R in Caprine to see your changes.
 		},
 		{
 			label: 'Vibrancy',
-			visible: is.macos,
+			visible: false, // Hidden: Modern macOS design favors subtle materials; vibrancy is deprecated
 			submenu: vibrancySubmenu,
 		},
 		{

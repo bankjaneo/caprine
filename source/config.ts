@@ -65,8 +65,9 @@ const schema: Store.Schema<StoreType> = {
 	vibrancy: {
 		type: 'string',
 		enum: ['none', 'sidebar', 'full'],
-		// TODO: Change the default to 'sidebar' when the vibrancy issue in Electron is fixed.
-		// See https://github.com/electron/electron/issues/10420
+		// Note: Electron vibrancy bug (#10420) is now fixed as of 2025.
+		// However, modern macOS design (Big Sur+) favors more subtle materials over heavy vibrancy.
+		// Keep default as 'none' to align with contemporary macOS design trends.
 		default: 'none',
 	},
 	zoomFactor: {
