@@ -1,33 +1,35 @@
 /* Custom native scrollbar */
 
-/* Light theme */
-::-webkit-scrollbar {
-	width: 16px;
+/* Light theme - override Facebook chat theme gradients in main chat area only */
+[role='main']::-webkit-scrollbar {
+	width: 8px !important;
+	height: 8px !important;
+	background: #f5f6f7 !important;
 }
-::-webkit-scrollbar-thumb {
-	box-shadow: inset 0 0 16px 16px #bcc0c4;
-	border-radius: 8px;
-	border: solid 4px transparent;
+[role='main']::-webkit-scrollbar-thumb {
+	background-color: rgba(0 0 0 / 10%) !important;
+	border-radius: 4px !important;
 }
-::-webkit-scrollbar-track {
-	box-shadow: inset 0 0 16px 16px #fff;
+[role='main']::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(0 0 0 / 15%) !important;
 }
-::-webkit-scrollbar-track:hover {
-	box-shadow: inset 0 0 16px 16px #f0f1f2;
+[role='main']::-webkit-scrollbar-track {
+	background: transparent !important;
 }
 
-/* Dark theme */
-html.dark-mode ::-webkit-scrollbar {
-	width: 16px;
+/* Dark theme - override Facebook chat theme gradients in main chat area only */
+html.dark-mode [role='main']::-webkit-scrollbar {
+	width: 8px !important;
+	height: 8px !important;
+	background: var(--container-dark-color) !important;
 }
-html.dark-mode ::-webkit-scrollbar-thumb {
-	box-shadow: inset 0 0 16px 16px #ffffff4c;
-	border-radius: 8px;
-	border: solid 4px transparent;
+html.dark-mode [role='main']::-webkit-scrollbar-thumb {
+	background-color: var(--base-twenty) !important;
+	border-radius: 4px !important;
 }
-html.dark-mode ::-webkit-scrollbar-track {
-	box-shadow: inset 0 0 16px 16px #0000;
+html.dark-mode [role='main']::-webkit-scrollbar-thumb:hover {
+	background-color: var(--base-thirty) !important;
 }
-html.dark-mode ::-webkit-scrollbar-track:hover {
-	box-shadow: inset 0 0 16px 16px #ffffff10;
+html.dark-mode [role='main']::-webkit-scrollbar-track {
+	background: transparent !important;
 }
