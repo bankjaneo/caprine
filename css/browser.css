@@ -74,11 +74,6 @@ body {
 	gap: 16px !important;
 }
 
-/* Add gap between chat area and right sidebar */
-[role='main'] > div > div > div {
-	gap: 16px !important;
-}
-
 /* Round the conversation list container to match the chat container */
 [role='navigation']:has([role='grid']) {
 	border-radius: 8px !important;
