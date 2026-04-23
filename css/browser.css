@@ -83,6 +83,17 @@ body {
 	max-width: 360px !important;
 }
 
+/* Add 16px gap between chat panel and info panel when info panel is expanded */
+/* Reset margin on chat panel */
+[role='main'] .x9f619.x1ja2u2z.x78zum5.x1n2onr6.x1r8uery.x1iyjqo2 > .x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k:first-child {
+	margin-left: 0 !important;
+}
+
+/* Add margin to info panel */
+[role='main'] .x9f619.x1ja2u2z.x78zum5.x1n2onr6.x1r8uery.x1iyjqo2 > .x9f619.x1n2onr6.x1ja2u2z.x78zum5.xdt5ytf.x1iyjqo2.xs83m0k:last-child {
+	margin-left: 16px !important;
+}
+
 /* Cookies notification: Adjust size for smaller windows */
 ._9o-g {
 	height: 290px !important;
