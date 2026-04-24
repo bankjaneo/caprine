@@ -988,6 +988,23 @@ document.addEventListener('click', (event: MouseEvent) => {
 		return;
 	}
 
+	// Only open external browser when on the messages page
+	// This ensures login, checkpoint, 2FA, and other Facebook pages work correctly within the app
+	const currentUrl = new URL(window.location.href);
+	const isFacebookDomain = currentUrl.hostname === 'www.facebook.com' || currentUrl.hostname === 'web.facebook.com';
+	const isMessagesPage = isFacebookDomain && currentUrl.pathname.startsWith('/messages');
+	const isLoginPage = isFacebookDomain && (
+		currentUrl.pathname.startsWith('/login')
+		|| currentUrl.pathname.startsWith('/checkpoint')
+		|| currentUrl.pathname.startsWith('/two_step_verification')
+		|| currentUrl.pathname.startsWith('/two_factor')
+		|| currentUrl.pathname === '/'
+	);
+
+	if (!isMessagesPage && !isLoginPage) {
+		return;
+	}
+
 	// Find if clicked element is within a link
 	const link = target.closest<HTMLAnchorElement>('a[href]');
 	if (!link) {

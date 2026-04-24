@@ -666,6 +666,7 @@ function createMainWindow(): BrowserWindow {
 				|| pathname.startsWith('/login')
 				|| pathname.startsWith('/checkpoint')
 				|| pathname.startsWith('/two_step_verification')
+				|| pathname.startsWith('/two_factor')
 				|| pathname.startsWith('/logout')
 			);
 		};
