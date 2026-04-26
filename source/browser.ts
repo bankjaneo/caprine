@@ -636,7 +636,10 @@ function selectedConversationIndex(offset = 0): number {
 
 async function setZoom(zoomFactor: number): Promise<void> {
 	const node = document.querySelector<HTMLElement>('#zoomFactor')!;
-	node.textContent = `${selectors.conversationSelector} {zoom: ${zoomFactor} !important}`;
+	node.textContent = `
+		${selectors.conversationList} {zoom: ${zoomFactor} !important;}
+		${selectors.conversationContent} {zoom: ${zoomFactor} !important;}
+	`;
 	await ipc.callMain<number, void>('set-config-zoomFactor', zoomFactor);
 }
 

@@ -1,8 +1,8 @@
 export default {
 	leftSidebar: '[role="navigation"]:has([role=grid]) > div > div', // Thread list navigation container
 	chatsIcon: '[class="x9f619 x1n2onr6 x1ja2u2z x78zum5 xdt5ytf x2lah0s x193iq5w xdj266r"] a', // ! Legacy messenger.com selector, no longer used for tray icon
-	conversationList: '[role=navigation] [role=grid] [class="x1n2onr6"]',
-	conversationSelector: '[role=main] [role=grid]',
+	conversationList: '[role="navigation"]:has([role="grid"])',
+	conversationContent: '[role="log"]',
 	conversationSidebarUnreadDot: 'x1i10hfl x1qjc9v5 xjbqb8w xjqpnuy xa49m3k xqeqjp1 x2hbi6w x13fuv20 xu3j5b3 x1q0q8m5 x26u7qi x972fbf xcfux6l x1qhh985 xm0m39n x9f619 x1ypdohk xdl72j9 x2lah0s xe8uvvx xdj266r x11i5rnm xat24cr x1mh8g0r x2lwn1j xeuugli xexx8yu x4uap5 x18d9i69 xkhd6sd x1n2onr6 x16tdsg8 x1hl2dhg xggy1nq x1ja2u2z x1t137rt x1o1ewxj x3x9cwd x1e5q0jg x13rtm0m x1q0g3np x87ps6o x1lku1pv x78zum5 x1a2a7pz',
 	conversationSidebarTextParent: 'html-span xdj266r x11i5rnm xat24cr x1mh8g0r xexx8yu x18d9i69 xkhd6sd x1hl2dhg x16tdsg8 x1vvkbs x6s0dn4 x9f619 x78zum5 x193iq5w xeuugli xg83lxy', // Parent element of the conversation text element (needed for notifications)
 	conversationSidebarTextSelector: '[class*="x1lliihq"][class*="x6ikm8r"][class*="x10wlt62"][class*="x1n2onr6"][class*="xlyipyv"][class*="xuxw1ft"]', // Generic selector for the text contents of all conversations
