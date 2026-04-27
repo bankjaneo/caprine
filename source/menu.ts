@@ -468,21 +468,21 @@ Press Command/Ctrl+R in Caprine to see your changes.
 	const viewSubmenu: MenuItemConstructorOptions[] = [
 		{
 			label: 'Reset Text Size',
-			accelerator: 'CommandOrControl+0',
+			accelerator: is.linux ? 'Alt+0' : 'CommandOrControl+0',
 			click() {
 				sendAction('zoom-reset');
 			},
 		},
 		{
 			label: 'Increase Text Size',
-			accelerator: 'CommandOrControl+Plus',
+			accelerator: is.linux ? 'Alt+Plus' : 'CommandOrControl+Plus',
 			click() {
 				sendAction('zoom-in');
 			},
 		},
 		{
 			label: 'Decrease Text Size',
-			accelerator: 'CommandOrControl+-',
+			accelerator: is.linux ? 'Alt+-' : 'CommandOrControl+-',
 			click() {
 				sendAction('zoom-out');
 			},

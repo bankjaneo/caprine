@@ -465,6 +465,58 @@ function createMainWindow(): BrowserWindow {
 		sendAction('zoom-in');
 	});
 
+	// Register alternative shortcuts for Linux/GNOME which uses Ctrl+0/+/− for system zoom
+	if (is.linux) {
+		electronLocalshortcut.register(mainWindow, 'Alt+0', () => {
+			sendAction('zoom-reset');
+		});
+		electronLocalshortcut.register(mainWindow, 'Alt+Plus', () => {
+			sendAction('zoom-in');
+		});
+		electronLocalshortcut.register(mainWindow, 'Alt+=', () => {
+			sendAction('zoom-in');
+		});
+		electronLocalshortcut.register(mainWindow, 'Alt+-', () => {
+			sendAction('zoom-out');
+		});
+	}
+
+	// Handle numpad keys manually since electron-localshortcut doesn't support them
+	mainWindow.webContents.on('before-input-event', (event, input) => {
+		if (input.type !== 'keyDown') {
+			return;
+		}
+
+		const hasAlt = input.modifiers?.includes('alt');
+
+		if (hasAlt) {
+			switch (input.code) {
+				case 'Numpad0': {
+					event.preventDefault();
+					sendAction('zoom-reset');
+					break;
+				}
+
+				case 'NumpadAdd':
+				case 'NumpadEqual': {
+					event.preventDefault();
+					sendAction('zoom-in');
+					break;
+				}
+
+				case 'NumpadSubtract': {
+					event.preventDefault();
+					sendAction('zoom-out');
+					break;
+				}
+
+				default: {
+					break;
+				}
+			}
+		}
+	});
+
 	// Start in menu bar mode if enabled, otherwise start normally
 	setUpMenuBarMode(mainWindow);
 
