@@ -488,8 +488,10 @@ function createMainWindow(): BrowserWindow {
 		}
 
 		const hasAlt = input.modifiers?.includes('alt');
+		const hasControl = input.modifiers?.includes('control');
+		const hasMeta = input.modifiers?.includes('meta');
 
-		if (hasAlt) {
+		if (hasAlt || hasControl || hasMeta) {
 			switch (input.code) {
 				case 'Numpad0': {
 					event.preventDefault();
