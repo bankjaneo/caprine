@@ -917,6 +917,7 @@ ipc.answerRenderer(
 		}
 
 		notification.show();
+		mainWindow.focus();
 	},
 );
 
