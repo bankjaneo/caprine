@@ -874,7 +874,7 @@ ipc.answerRenderer(
 			title,
 			body: config.get('notificationMessagePreview') ? body : 'You have a new message',
 			hasReply: true,
-			icon: nativeImage.createFromDataURL(icon),
+			...(icon ? {icon: nativeImage.createFromDataURL(icon)} : {}),
 			silent: silent || is.linux || is.macos,
 		});
 

@@ -235,7 +235,7 @@ function generateStringFromNode(element: Element): string | undefined {
 	return cloneElement.textContent ?? undefined;
 }
 
-function countUnread(mutationsList: MutationRecord[]): void {
+async function countUnread(mutationsList: MutationRecord[]): Promise<void> {
 	const alreadyChecked: string[] = [];
 
 	// Check latest mutation first
@@ -300,13 +300,15 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		alreadyChecked.push(href);
 
 		// Get the icon data URI (set by createConversationList via createIcons).
-		const imgUrl = current.querySelector('img')?.dataset.caprineIcon;
-		const textOptions = current.querySelectorAll<HTMLElement>(selectors.conversationSidebarTextSelector);
+		const img = current.querySelector('img') as HTMLElement | null;
+		const imgUrl = img ? await getIcon(img, true) : '';
+
+		const textOptions = current.querySelectorAll(selectors.conversationSidebarTextSelector);
 		const titleText = generateStringFromNode(textOptions[0]);
 		const bodyText = textOptions[1] ? generateStringFromNode(textOptions[1]) : undefined;
 
-		if (!titleText || !imgUrl) {
-			continue;
+		if (!titleText) {
+		    continue;
 		}
 
 		// Generate conversation ID for notification tracking
