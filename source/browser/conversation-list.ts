@@ -308,7 +308,7 @@ async function countUnread(mutationsList: MutationRecord[]): Promise<void> {
 		const bodyText = textOptions[1] ? generateStringFromNode(textOptions[1]) : undefined;
 
 		if (!titleText) {
-		    continue;
+			continue;
 		}
 
 		// Generate conversation ID for notification tracking
