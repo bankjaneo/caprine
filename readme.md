@@ -223,6 +223,19 @@ sudo rpm -i ./caprine-*.rpm
 
 #### Arch Linux package:
 
+**Option 1: Build from source**
+
+```bash
+git clone https://github.com/sindresorhus/caprine
+cd caprine
+npm ci
+npm run build
+bash build-pacman.sh
+sudo pacman -U dist/caprine-*.pkg.tar.zst
+```
+
+**Option 2: Download pre-built package**
+
 [Download](https://github.com/sindresorhus/caprine/releases/latest) the `.pkg.tar.zst` file.
 
 Install using:

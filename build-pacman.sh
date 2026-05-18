@@ -20,6 +20,23 @@ case "${1:-}" in
 		;;
 esac
 
+# Check if running as root (makepkg cannot run as root)
+if [ "$EUID" -eq 0 ]; then
+	echo "Error: This script cannot be run as root."
+	echo "Please run as a regular user with sudo access."
+	exit 1
+fi
+
+# Check for required tools
+for cmd in node npm git rsync makepkg; do
+	if ! command -v "$cmd" &> /dev/null; then
+		echo "Error: $cmd is not installed."
+		echo "Please install required dependencies:"
+		echo "  sudo pacman -S --needed base-devel nodejs npm git rsync"
+		exit 1
+	fi
+done
+
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
@@ -66,7 +83,7 @@ build_pacman() {
 
 	# Build package
 	cd "$BUILD_DIR"
-	makepkg -f --noconfirm --nodeps
+	makepkg -f --noconfirm -s
 
 	# Copy artifact to dist
 	cp "$BUILD_DIR"/caprine-*.pkg.tar.zst "$PROJECT_DIR/dist/"

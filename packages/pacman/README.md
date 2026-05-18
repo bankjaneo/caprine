@@ -6,24 +6,53 @@ This directory contains the Arch Linux package files for Caprine.
 
 ### Prerequisites
 
-- Arch Linux or Arch-based distribution
+- Arch Linux or Arch-based distribution (x86_64 or aarch64)
 - `base-devel` package group
-- `devtools` package (for clean chroot builds)
+- Node.js and npm
+- Git
+- rsync
+- sudo access (makepkg cannot run as root)
+- Desktop environment (GTK3 dependencies)
+
+### Install Dependencies
+
+```bash
+sudo pacman -S --needed base-devel nodejs npm git rsync
+```
+
+> **Important:** The build script must be run as a regular user (not root). makepkg will refuse to run as root for security reasons.
 
 ### Build Instructions
 
-1. Install required dependencies:
+1. Clone or navigate to the Caprine source directory:
    ```bash
-   sudo pacman -S --needed base-devel devtools
+   cd caprine
    ```
 
-2. Build the package:
+2. Install Node.js dependencies:
    ```bash
-   # From the project root directory
+   npm ci
+   ```
+
+3. Build the Electron app:
+   ```bash
+   npm run build
+   ```
+
+4. Build the pacman package:
+   ```bash
    bash build-pacman.sh
    ```
 
-3. The package will be created in the `dist/` directory.
+   Or for a specific architecture:
+   ```bash
+   bash build-pacman.sh --x86_64  # or --aarch64
+   ```
+
+5. The package will be created in the `dist/` directory:
+   ```bash
+   ls -lh dist/*.pkg.tar.zst
+   ```
 
 ### Building for Specific Architecture
 
