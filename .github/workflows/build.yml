@@ -90,6 +90,15 @@ jobs:
         run: gh release upload "${{ github.ref_name }}" dist/*.rpm --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Pacman packages (x86_64 and aarch64)
+        if: startsWith(matrix.os, 'ubuntu')
+        run: |
+          bash build-pacman.sh
+      - name: Upload Pacman packages to GitHub Releases
+        if: startsWith(matrix.os, 'ubuntu')
+        run: gh release upload "${{ github.ref_name }}" dist/*.pkg.tar.zst --clobber --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload x64 deb to Gemfury
         if: startsWith(matrix.os, 'ubuntu')
         run: |

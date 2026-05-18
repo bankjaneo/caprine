@@ -25,6 +25,7 @@
 		"build": "tsc",
 		"dist:linux": "electron-builder --linux",
 		"dist:rpm": "bash build-rpm.sh",
+		"dist:pacman": "bash build-pacman.sh",
 		"dist:mac": "electron-builder --mac",
 		"dist:win": "electron-builder --win",
 		"release": "np --no-publish"

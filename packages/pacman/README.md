@@ -1,0 +1,155 @@
+# Caprine Arch Linux Package
+
+This directory contains the Arch Linux package files for Caprine.
+
+## Building the Package
+
+### Prerequisites
+
+- Arch Linux or Arch-based distribution
+- `base-devel` package group
+- `devtools` package (for clean chroot builds)
+
+### Build Instructions
+
+1. Install required dependencies:
+   ```bash
+   sudo pacman -S --needed base-devel devtools
+   ```
+
+2. Build the package:
+   ```bash
+   # From the project root directory
+   bash build-pacman.sh
+   ```
+
+3. The package will be created in the `dist/` directory.
+
+### Building for Specific Architecture
+
+```bash
+# Build for x86_64 only
+bash build-pacman.sh --x86_64
+
+# Build for aarch64 only
+bash build-pacman.sh --aarch64
+
+# Build for both architectures (default)
+bash build-pacman.sh
+```
+
+## Installation
+
+After building, install the package:
+
+```bash
+sudo pacman -U dist/caprine-*.pkg.tar.zst
+```
+
+## AUR Submission
+
+To submit this package to the Arch User Repository (AUR):
+
+1. Generate the `.SRCINFO` file:
+   ```bash
+   bash packages/pacman/generate-srcinfo.sh
+   ```
+
+2. Clone the AUR package repository:
+   ```bash
+   git clone ssh://aur@aur.archlinux.org/caprine.git
+   cd caprine
+   ```
+
+3. Copy the package files:
+   ```bash
+   cp ../packages/pacman/PKGBUILD .
+   cp ../packages/pacman/caprine.install .
+   cp ../packages/pacman/.SRCINFO .
+   ```
+
+4. Commit and push:
+   ```bash
+   git add .
+   git commit -m "Initial package submission"
+   git push
+   ```
+
+## Package Structure
+
+- `/usr/lib/caprine/` - Application files
+- `/usr/share/icons/hicolor/*/apps/caprine.png` - Application icons
+- `/usr/share/applications/caprine.desktop` - Desktop entry
+- `/usr/share/licenses/caprine/LICENSE` - License file
+- `/usr/bin/caprine` - Executable symlink
+
+## Dependencies
+
+### Required
+
+- `gtk3` - GUI toolkit
+- `libnotify` - Desktop notifications
+- `nss` - Network Security Services
+- `libXScrnSaver` - X11 Screen Saver extension
+- `libXtst` - X11 Testing extension
+- `xdg-utils` - Desktop integration utilities
+- `at-spi2-core` - Assistive Technology Service Provider
+- `alsa-lib` - Audio support
+- `libsecret` - Secret storage API
+
+### Optional
+
+- `gnome-keyring` - Password management for GNOME
+- `kwallet` - Password management for KDE
+
+## Maintenance
+
+### Updating the Package Version
+
+1. Update `pkgver` in `PKGBUILD`
+2. Update `sha256sums` if source URL changes
+3. Regenerate `.SRCINFO`:
+   ```bash
+   bash generate-srcinfo.sh
+   ```
+4. Commit changes and push to AUR
+
+### Testing
+
+Test the package in a clean environment:
+
+```bash
+# Test installation
+docker run --rm -v $PWD:/pkg archlinux:base-devel bash -c '
+    cd /pkg
+    pacman -U --noconfirm caprine-*.pkg.tar.zst
+    caprine --version
+'
+```
+
+## Troubleshooting
+
+### Build fails with "npm not found"
+
+Ensure Node.js and npm are installed:
+```bash
+sudo pacman -S nodejs npm
+```
+
+### Icons not showing
+
+Rebuild icon cache:
+```bash
+sudo gtk-update-icon-cache -qtf /usr/share/icons/hicolor
+```
+
+### Desktop entry not appearing
+
+Update desktop database:
+```bash
+sudo update-desktop-database
+```
+
+## License
+
+MIT License - see the [LICENSE](../../LICENSE) file for details.

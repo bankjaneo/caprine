@@ -66,11 +66,20 @@ Or with [Homebrew](https://brew.sh): `$ brew install caprine`
 	<th>Maintainer</th>
 	<th>How to install</th>
 	<tr>
-		<td>Arch Linux</td>
-		<td>Community</td>
+		<td>Arch Linux (Official)</td>
+		<td>GitHub</td>
+		<td align="center">❌</td>
+		<td>Official</td>
+		<td>
+			<a href="https://github.com/sindresorhus/caprine/releases/latest">Download</a> the .pkg.tar.zst file
+		</td>
+	</tr>
+	<tr>
+		<td>Arch Linux (AUR)</td>
+		<td>AUR</td>
 		<td align="center">✔️</td>
-		<td>Frederik Schwan</td>
-		<td><code>pacman -S caprine</code></td>
+		<td>Community</td>
+		<td><code>yay -S caprine</code></td>
 	</tr>
 	<tr>
 		<td>Debian / Ubuntu (manually)</td>
@@ -210,6 +219,22 @@ sudo zypper install ./caprine-*.rpm
 Or use `rpm` directly on any distribution:
 ```sh
 sudo rpm -i ./caprine-*.rpm
+```
+
+#### Arch Linux package:
+
+[Download](https://github.com/sindresorhus/caprine/releases/latest) the `.pkg.tar.zst` file.
+
+Install using:
+```sh
+sudo pacman -U caprine-*.pkg.tar.zst
+```
+
+#### AUR Helper:
+
+If you have an AUR helper like [yay](https://github.com/Jguer/yay), you can install Caprine with:
+```sh
+yay -S caprine
 ```
 
 #### AppImage:
