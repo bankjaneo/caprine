@@ -10,14 +10,13 @@ This directory contains the Arch Linux package files for Caprine.
 - `base-devel` package group
 - Node.js and npm
 - Git
-- rsync
 - sudo access (makepkg cannot run as root)
 - Desktop environment (GTK3 dependencies)
 
 ### Install Dependencies
 
 ```bash
-sudo pacman -S --needed base-devel nodejs npm git rsync
+sudo pacman -S --needed base-devel nodejs npm git
 ```
 
 > **Important:** The build script must be run as a regular user (not root). makepkg will refuse to run as root for security reasons.
@@ -77,32 +76,7 @@ sudo pacman -U dist/caprine-*.pkg.tar.zst
 
 ## AUR Submission
 
-To submit this package to the Arch User Repository (AUR):
-
-1. Generate the `.SRCINFO` file:
-   ```bash
-   bash packages/pacman/generate-srcinfo.sh
-   ```
-
-2. Clone the AUR package repository:
-   ```bash
-   git clone ssh://aur@aur.archlinux.org/caprine.git
-   cd caprine
-   ```
-
-3. Copy the package files:
-   ```bash
-   cp ../packages/pacman/PKGBUILD .
-   cp ../packages/pacman/caprine.install .
-   cp ../packages/pacman/.SRCINFO .
-   ```
-
-4. Commit and push:
-   ```bash
-   git add .
-   git commit -m "Initial package submission"
-   git push
-   ```
+This package is designed for local building via `build-pacman.sh`. For AUR submission, a self-contained `PKGBUILD` with proper `source` array and build functions would be required.
 
 ## Package Structure
 

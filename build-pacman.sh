@@ -81,6 +81,7 @@ build_pacman() {
 	# Create build directory with automatic cleanup
 	local BUILD_DIR
 	BUILD_DIR=$(mktemp -d -t caprine-pacman-${ARCH}.XXXXXX)
+	trap 'rm -rf "$BUILD_DIR"' EXIT
 
 	# Copy PKGBUILD
 	cp "$PROJECT_DIR/packages/pacman/PKGBUILD" "$BUILD_DIR/"
@@ -110,6 +111,7 @@ build_pacman() {
 	# Cleanup build directory
 	cd "$PROJECT_DIR"
 	rm -rf "$BUILD_DIR"
+	trap - EXIT
 
 	echo "✓ Built: caprine-${VERSION}-${ARCH}.pkg.tar.zst"
 }
