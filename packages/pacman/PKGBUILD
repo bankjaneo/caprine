@@ -6,19 +6,20 @@ pkgdesc="Elegant Facebook Messenger desktop app"
 arch=("x86_64" "aarch64")
 url="https://github.com/sindresorhus/caprine"
 license=("MIT")
-depends=("gtk3" "libnotify" "nss" "libxss" "libxtst" "xdg-utils" "at-spi2-core" "alsa-lib" "libsecret" "libxcb" "libxkbfile" "libxrandr" "mesa" "libgl" "libxcomposite" "libxdamage" "libxfixes" "libxinerama" "libcups" "pango" "cairo" "gdk-pixbuf2" "harfbuzz" "freetype2" "fontconfig" "glib2" "zlib" "expat" "libx11" "libxi" "libxcursor" "libxext" "libxrender" "libdrm" "wayland" "libepoxy" "libpng" "libjpeg-turbo" "libtiff" "libwebp" "libxkbcommon")
+depends=("gtk3" "libnotify" "nss" "libxss" "libxtst" "xdg-utils" "at-spi2-core" "alsa-lib" "libsecret" "libxcb" "libxkbfile" "libxrandr" "mesa" "libgl" "libxcomposite" "libxdamage" "libxfixes" "libxinerama" "libcups" "wayland" "libepoxy" "libdrm")
 options=("!debug")
 optdepends=("gnome-keyring: for password management" "kwallet: for KDE password management")
-install="caprine.install"
 source=()
 
 package() {
     cd "$srcdir/caprine-${pkgver}"
     
-    # Install app to /usr/lib/caprine
-    mkdir -p "$pkgdir/usr/lib/caprine"
+    # Determine dist directory based on architecture
     local dist_dir="linux-unpacked"
     [ "$CARCH" = "aarch64" ] && dist_dir="linux-arm64-unpacked"
+    
+    # Install app to /usr/lib/caprine
+    install -d "$pkgdir/usr/lib/caprine"
     cp -a "dist/$dist_dir/." "$pkgdir/usr/lib/caprine/"
     
     # Install icons
@@ -31,7 +32,7 @@ package() {
     install -Dm644 build/icons/512x512.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/caprine.png"
     
     # Install desktop file
-    mkdir -p "$pkgdir/usr/share/applications"
+    install -d "$pkgdir/usr/share/applications"
     cat > "$pkgdir/usr/share/applications/caprine.desktop" << EOF
 [Desktop Entry]
 Type=Application
@@ -49,6 +50,6 @@ EOF
     install -Dm644 license "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
     
     # Create symlink in /usr/bin
-    mkdir -p "$pkgdir/usr/bin"
-    ln -sf /usr/lib/caprine/caprine "$pkgdir/usr/bin/caprine"
+    install -d "$pkgdir/usr/bin"
+    ln -sfn ../lib/caprine/caprine "$pkgdir/usr/bin/caprine"
 }

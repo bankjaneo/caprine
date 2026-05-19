@@ -82,25 +82,25 @@ build_pacman() {
 	local BUILD_DIR
 	BUILD_DIR=$(mktemp -d -t caprine-pacman-${ARCH}.XXXXXX)
 
-	# Copy PKGBUILD and install script
+	# Copy PKGBUILD
 	cp "$PROJECT_DIR/packages/pacman/PKGBUILD" "$BUILD_DIR/"
-	cp "$PROJECT_DIR/packages/pacman/caprine.install" "$BUILD_DIR/"
 
 	# Update PKGBUILD with version
 	sed -i "s/^pkgver=.*/pkgver=\"${VERSION}\"/" "$BUILD_DIR/PKGBUILD"
 
-	# Copy source directory (excluding dist and unnecessary files)
-	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}"
-	rsync -a --exclude='node_modules' --exclude='.git' --exclude='dist' "$PROJECT_DIR/" "$BUILD_DIR/src/caprine-${VERSION}/"
-	
-	# Copy only the required dist folder
+	# Copy only required files to source directory
 	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/dist"
 	cp -a "$DIST_DIR" "$BUILD_DIR/src/caprine-${VERSION}/dist/"
+	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/build"
+	cp -a "$PROJECT_DIR/build/icons" "$BUILD_DIR/src/caprine-${VERSION}/build/"
+	cp -a "$PROJECT_DIR/license" "$BUILD_DIR/src/caprine-${VERSION}/"
+	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/packages/pacman"
+	cp -a "$PROJECT_DIR/packages/pacman/caprine.desktop" "$BUILD_DIR/src/caprine-${VERSION}/packages/pacman/"
 
 	# Build package
 	cd "$BUILD_DIR"
 	
-	# Set architecture for cross-compilation
+	# Set CARCH for makepkg
 	export CARCH="$ARCH"
 	makepkg -f --noconfirm -s
 
