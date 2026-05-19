@@ -93,11 +93,17 @@ jobs:
       - name: Build Pacman packages (x86_64 and aarch64)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          # Install Arch Linux build tools
-          sudo pacman -Sy --noconfirm base-devel pacman rsync
+          # Build pacman packages in Arch Linux container
+          docker run --rm -v "${{ github.workspace }}":/caprine archlinux:base-devel bash -c '
+            pacman -Sy --noconfirm base-devel nodejs npm git rsync sudo
+            useradd -m -s /bin/bash builder
+            echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+            chown -R builder:builder /caprine
+            su - builder -c "cd /caprine && bash build-pacman.sh"
+          '
           
-          # Build pacman packages
-          bash build-pacman.sh
+          # Fix permissions on built packages
+          sudo chown -R runner:runner dist/
       - name: Upload Pacman packages to GitHub Releases
         if: startsWith(matrix.os, 'ubuntu')
         run: gh release upload "${{ github.ref_name }}" dist/*.pkg.tar.zst --clobber --repo "${{ github.repository }}"
