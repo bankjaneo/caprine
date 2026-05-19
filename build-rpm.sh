@@ -40,6 +40,13 @@ build_rpm() {
 		TARGET_ARCH="$ARCH"
 	fi
 
+	# Convert architecture name for electron-builder
+	if [ "$ARCH" = "arm64" ]; then
+		ELECTRON_ARCH="arm64"
+	else
+		ELECTRON_ARCH="x64"
+	fi
+
 	# Check if required dist folder exists
 	if [ ! -d "$DIST_DIR" ]; then
 		echo "Error: Required dist folder not found: $DIST_DIR"
@@ -47,7 +54,7 @@ build_rpm() {
 		echo "Please run these commands first:"
 		echo "  npm ci"
 		echo "  npm run build"
-		echo "  npm run dist:linux"
+		echo "  npm run dist:linux -- --${ELECTRON_ARCH}"
 		echo ""
 		echo "Then run this script again."
 		exit 1

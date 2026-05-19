@@ -56,6 +56,13 @@ build_pacman() {
 		TARGET_ARCH="x86_64"
 	fi
 
+	# Convert architecture name for electron-builder
+	if [ "$ARCH" = "aarch64" ]; then
+		ELECTRON_ARCH="arm64"
+	else
+		ELECTRON_ARCH="x64"
+	fi
+
 	# Check if required dist folder exists
 	if [ ! -d "$DIST_DIR" ]; then
 		echo "Error: Required dist folder not found: $DIST_DIR"
@@ -63,7 +70,7 @@ build_pacman() {
 		echo "Please run these commands first:"
 		echo "  npm ci"
 		echo "  npm run build"
-		echo "  npm run dist:linux"
+		echo "  npm run dist:linux -- --${ELECTRON_ARCH}"
 		echo ""
 		echo "Then run this script again."
 		exit 1
