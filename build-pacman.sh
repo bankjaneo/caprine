@@ -79,16 +79,14 @@ build_pacman() {
 	echo "Building Caprine ${VERSION} for ${ARCH}..."
 
 	# Create build directory
-	BUILD_DIR="/tmp/caprine-pacman-${ARCH}"
-	rm -rf "$BUILD_DIR"
-	mkdir -p "$BUILD_DIR"
+	BUILD_DIR=$(mktemp -d -t caprine-pacman-${ARCH}.XXXXXX)
 
 	# Copy PKGBUILD and install script
 	cp "$PROJECT_DIR/packages/pacman/PKGBUILD" "$BUILD_DIR/"
 	cp "$PROJECT_DIR/packages/pacman/caprine.install" "$BUILD_DIR/"
 
 	# Update PKGBUILD with version
-	sed -i "s/pkgver=\"2.61.22\"/pkgver=\"${VERSION}\"/" "$BUILD_DIR/PKGBUILD"
+	sed -i "s/^pkgver=.*/pkgver=\"${VERSION}\"/" "$BUILD_DIR/PKGBUILD"
 
 	# Copy source directory (only needed files)
 	mkdir -p "$BUILD_DIR/src"

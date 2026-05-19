@@ -7,7 +7,7 @@ arch=("x86_64" "aarch64")
 url="https://github.com/sindresorhus/caprine"
 license=("MIT")
 depends=("gtk3" "libnotify" "nss" "libxss" "libxtst" "xdg-utils" "at-spi2-core" "alsa-lib" "libsecret" "libxcb" "libxkbfile" "libxrandr" "mesa" "libgl" "libxcomposite" "libxdamage" "libxfixes" "libxinerama" "libcups" "pango" "cairo" "gdk-pixbuf2" "harfbuzz" "freetype2" "fontconfig" "glib2" "zlib" "expat" "libx11" "libxi" "libxcursor" "libxext" "libxrender" "libdrm" "wayland" "libepoxy" "libpng" "libjpeg-turbo" "libtiff" "libwebp" "libxkbcommon")
-options=("!strip" "!debug")
+options=("!debug")
 optdepends=("gnome-keyring: for password management" "kwallet: for KDE password management")
 install="caprine.install"
 source=()
@@ -27,7 +27,9 @@ package() {
     
     # Install app to /usr/lib/caprine
     mkdir -p "$pkgdir/usr/lib/caprine"
-    cp -r dist/linux-unpacked/* "$pkgdir/usr/lib/caprine/"
+    local dist_dir="linux-unpacked"
+    [ "$CARCH" = "aarch64" ] && dist_dir="linux-arm64-unpacked"
+    cp -r "dist/$dist_dir/"* "$pkgdir/usr/lib/caprine/"
     
     # Install icons
     install -Dm644 build/icons/16x16.png "$pkgdir/usr/share/icons/hicolor/16x16/apps/caprine.png"
@@ -48,6 +50,3 @@ package() {
     mkdir -p "$pkgdir/usr/bin"
     ln -sf /usr/lib/caprine/caprine "$pkgdir/usr/bin/caprine"
 }
-
-# Strip binaries to reduce package size and prevent debug package generation
-strip "$pkgdir/usr/lib/caprine/caprine" 2>/dev/null || true

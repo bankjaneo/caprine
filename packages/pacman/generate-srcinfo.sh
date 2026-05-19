@@ -3,13 +3,9 @@ set -e
 
 cd packages/pacman
 
-# Install mksrcinfo if not present
-if ! command -v mksrcinfo &> /dev/null; then
-    echo "Installing mksrcinfo..."
-    sudo pacman -S --noconfirm mksrcinfo
-fi
-
-# Generate .SRCINFO
-mksrcinfo PKGBUILD -o .SRCINFO
+# Generate .SRCINFO using makepkg's built-in functionality
+# Note: makepkg --printsrcinfo is the standard Arch Linux way to generate .SRCINFO
+# It's built into makepkg (part of pacman) and doesn't require additional packages
+makepkg --printsrcinfo > .SRCINFO
 
 echo "✓ Generated .SRCINFO"
