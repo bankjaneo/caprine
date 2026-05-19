@@ -59,7 +59,13 @@ build_pacman() {
 	# Check if required dist folder exists
 	if [ ! -d "$DIST_DIR" ]; then
 		echo "Error: Required dist folder not found: $DIST_DIR"
-		echo "Please run 'npm run dist:linux' or 'npm run dist:linux -- --$ARCH' first."
+		echo ""
+		echo "Please run these commands first:"
+		echo "  npm ci"
+		echo "  npm run build"
+		echo "  npm run dist:linux"
+		echo ""
+		echo "Then run this script again."
 		exit 1
 	fi
 
