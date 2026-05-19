@@ -119,8 +119,8 @@ To submit this package to the Arch User Repository (AUR):
 - `gtk3` - GUI toolkit
 - `libnotify` - Desktop notifications
 - `nss` - Network Security Services
-- `libXScrnSaver` - X11 Screen Saver extension
-- `libXtst` - X11 Testing extension
+- `libxss` - X11 Screen Saver extension
+- `libxtst` - X11 Testing extension
 - `xdg-utils` - Desktop integration utilities
 - `at-spi2-core` - Assistive Technology Service Provider
 - `alsa-lib` - Audio support

@@ -28,11 +28,11 @@ if [ "$EUID" -eq 0 ]; then
 fi
 
 # Check for required tools
-for cmd in node npm git rsync makepkg; do
+for cmd in node npm git makepkg; do
 	if ! command -v "$cmd" &> /dev/null; then
 		echo "Error: $cmd is not installed."
 		echo "Please install required dependencies:"
-		echo "  sudo pacman -S --needed base-devel nodejs npm git rsync"
+		echo "  sudo pacman -S --needed base-devel nodejs npm git"
 		exit 1
 	fi
 done
