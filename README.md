@@ -230,6 +230,7 @@ git clone https://github.com/sindresorhus/caprine
 cd caprine
 npm ci
 npm run build
+npm run dist:linux
 bash build-pacman.sh
 sudo pacman -U dist/caprine-*.pkg.tar.zst
 ```

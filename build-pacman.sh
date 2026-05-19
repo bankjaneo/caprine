@@ -78,7 +78,8 @@ build_pacman() {
 
 	echo "Building Caprine ${VERSION} for ${ARCH}..."
 
-	# Create build directory
+	# Create build directory with automatic cleanup
+	local BUILD_DIR
 	BUILD_DIR=$(mktemp -d -t caprine-pacman-${ARCH}.XXXXXX)
 
 	# Copy PKGBUILD and install script
@@ -88,9 +89,13 @@ build_pacman() {
 	# Update PKGBUILD with version
 	sed -i "s/^pkgver=.*/pkgver=\"${VERSION}\"/" "$BUILD_DIR/PKGBUILD"
 
-	# Copy source directory (only needed files)
-	mkdir -p "$BUILD_DIR/src"
-	rsync -a --exclude='node_modules' --exclude='.git' "$PROJECT_DIR/" "$BUILD_DIR/src/caprine-${VERSION}/"
+	# Copy source directory (excluding dist and unnecessary files)
+	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}"
+	rsync -a --exclude='node_modules' --exclude='.git' --exclude='dist' "$PROJECT_DIR/" "$BUILD_DIR/src/caprine-${VERSION}/"
+	
+	# Copy only the required dist folder
+	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/dist"
+	cp -a "$DIST_DIR" "$BUILD_DIR/src/caprine-${VERSION}/dist/"
 
 	# Build package
 	cd "$BUILD_DIR"
@@ -101,6 +106,10 @@ build_pacman() {
 
 	# Copy artifact to dist
 	cp "$BUILD_DIR"/caprine-*.pkg.tar.zst "$PROJECT_DIR/dist/"
+
+	# Cleanup build directory
+	cd "$PROJECT_DIR"
+	rm -rf "$BUILD_DIR"
 
 	echo "✓ Built: caprine-${VERSION}-${ARCH}.pkg.tar.zst"
 }
