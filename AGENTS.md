@@ -22,8 +22,9 @@ Elegant Facebook Messenger desktop app built with Electron.
 - **Full test**: `npm run test` (runs `npm run test:tsc && npm run lint`)
 - **Distribution**: `npm run dist:mac`, `npm run dist:linux`, `npm run dist:win`
 - **RPM builds**: `npm run dist:rpm` or `bash build-rpm.sh` (requires dist artifacts, custom script not electron-builder)
+- **Pacman builds**: `npm run dist:pacman` or `bash build-pacman.sh` (requires dist artifacts, custom script for Arch Linux packages)
 
-**CI runs:** tsc, xo, stylelint, rpmspec validation (Node.js 24)
+**CI runs:** tsc, xo, stylelint, rpmspec validation, pacman build tests (Node.js 24)
 **Pre-push hook:** Runs `npm test` via Husky
 **Requirements:** Node.js >=16
 
