@@ -83,6 +83,9 @@ build_pacman() {
 
 	# Build package
 	cd "$BUILD_DIR"
+	
+	# Set architecture for cross-compilation
+	export CARCH="$ARCH"
 	makepkg -f --noconfirm -s
 
 	# Copy artifact to dist
