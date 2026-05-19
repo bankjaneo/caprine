@@ -93,6 +93,10 @@ jobs:
       - name: Build Pacman packages (x86_64 and aarch64)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          # Install Arch Linux build tools
+          sudo pacman -Sy --noconfirm base-devel pacman rsync
+          
+          # Build pacman packages
           bash build-pacman.sh
       - name: Upload Pacman packages to GitHub Releases
         if: startsWith(matrix.os, 'ubuntu')
