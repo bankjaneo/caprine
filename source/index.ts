@@ -36,7 +36,7 @@ import {
 import {process as processEmojiUrl} from './emoji';
 import ensureOnline from './ensure-online';
 import {setUpMenuBarMode} from './menu-bar-mode';
-import {caprineIconPath} from './constants';
+import {caprineIconPath, caprineIconLightPath, caprineIconDarkPath} from './constants';
 
 ipc.setMaxListeners(100);
 
@@ -382,10 +382,40 @@ function createMainWindow(): BrowserWindow {
 	initRequestsFiltering();
 
 	let previousDarkMode = darkMode.isEnabled;
+
+	function updateDockIcon(): void {
+		if (!is.macos) {
+			return;
+		}
+
+		// Check if dark mode is active (either system theme is dark, or manual theme override matches dark colors)
+		const theme = config.get('theme');
+		const isDark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
+		const iconPath = isDark ? caprineIconDarkPath : caprineIconLightPath;
+
+		try {
+			app.dock.setIcon(iconPath);
+		} catch (error) {
+			console.error('Failed to update dock icon:', error);
+		}
+	}
+
+	// Update on initial load
+	app.whenReady().then(() => {
+		updateDockIcon();
+	});
+
+	// Listen to system theme updates
+	nativeTheme.on('updated', () => {
+		updateDockIcon();
+	});
+
+	// Also trigger when Caprine-specific configurations change
 	darkMode.onChange(() => {
 		if (darkMode.isEnabled !== previousDarkMode) {
 			previousDarkMode = darkMode.isEnabled;
 			win.webContents.send('set-theme');
+			updateDockIcon();
 		}
 	});
 
