@@ -62,7 +62,7 @@ function updateDockIcon(): void {
 	const iconPath = isDark ? caprineIconDarkPath : caprineIconLightPath;
 
 	try {
-		app.dock.setIcon(iconPath);
+		app.dock.setIcon(nativeImage.createFromPath(iconPath));
 		hasSetDynamicIcon = true;
 	} catch (error) {
 		console.error('Failed to update dock icon:', error);
