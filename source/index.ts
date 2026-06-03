@@ -38,6 +38,37 @@ import ensureOnline from './ensure-online';
 import {setUpMenuBarMode} from './menu-bar-mode';
 import {caprineIconPath, caprineIconLightPath, caprineIconDarkPath} from './constants';
 
+let hasSetDynamicIcon = false;
+
+function updateDockIcon(): void {
+	if (!is.macos) {
+		return;
+	}
+
+	if (!config.get('dynamicDockIcon')) {
+		try {
+			if (hasSetDynamicIcon) {
+				app.dock.setIcon(null as any);
+				hasSetDynamicIcon = false;
+			}
+		} catch (error) {
+			console.error('Failed to reset dock icon:', error);
+		}
+		return;
+	}
+
+	const theme = config.get('theme');
+	const isDark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
+	const iconPath = isDark ? caprineIconDarkPath : caprineIconLightPath;
+
+	try {
+		app.dock.setIcon(iconPath);
+		hasSetDynamicIcon = true;
+	} catch (error) {
+		console.error('Failed to update dock icon:', error);
+	}
+}
+
 ipc.setMaxListeners(100);
 
 electronDebug({
@@ -383,33 +414,6 @@ function createMainWindow(): BrowserWindow {
 
 	let previousDarkMode = darkMode.isEnabled;
 
-	function updateDockIcon(): void {
-		if (!is.macos) {
-			return;
-		}
-
-		// Check if dark mode is active (either system theme is dark, or manual theme override matches dark colors)
-		const theme = config.get('theme');
-		const isDark = theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors);
-		const iconPath = isDark ? caprineIconDarkPath : caprineIconLightPath;
-
-		try {
-			app.dock.setIcon(iconPath);
-		} catch (error) {
-			console.error('Failed to update dock icon:', error);
-		}
-	}
-
-	// Update on initial load
-	app.whenReady().then(() => {
-		updateDockIcon();
-	});
-
-	// Listen to system theme updates
-	nativeTheme.on('updated', () => {
-		updateDockIcon();
-	});
-
 	// Also trigger when Caprine-specific configurations change
 	darkMode.onChange(() => {
 		if (darkMode.isEnabled !== previousDarkMode) {
@@ -553,6 +557,14 @@ function createMainWindow(): BrowserWindow {
 	setUpMenuBarMode(mainWindow);
 
 	if (is.macos) {
+		// Update dock icon on initial startup
+		updateDockIcon();
+
+		// Listen to system theme updates
+		nativeTheme.on('updated', () => {
+			updateDockIcon();
+		});
+
 		const firstItem: MenuItemConstructorOptions = {
 			label: 'Mute Notifications',
 			type: 'checkbox',
@@ -626,6 +638,19 @@ function createMainWindow(): BrowserWindow {
 	// Update badge on conversations change
 	ipc.answerRenderer('update-tray-icon', async (messageCount: number) => {
 		updateBadge(messageCount);
+	});
+
+	ipc.answerRenderer('update-dock-icon', () => {
+		updateDockIcon();
+	});
+
+	// Listeners for instant configuration changes
+	config.onDidChange('dynamicDockIcon', () => {
+		updateDockIcon();
+	});
+
+	config.onDidChange('theme', () => {
+		updateDockIcon();
 	});
 
 	// Update titlebar on unread count change

@@ -236,7 +236,7 @@ Press Command/Ctrl+R in Caprine to see your changes.
 		},
 	];
 
-	const preferencesSubmenu: MenuItemConstructorOptions[] = [
+		const preferencesSubmenu: MenuItemConstructorOptions[] = [
 		{
 			/* TODO: Fix privacy features */
 			/* If you want to help, see #1688 */
@@ -247,6 +247,17 @@ Press Command/Ctrl+R in Caprine to see your changes.
 		{
 			label: 'Emoji Style',
 			submenu: await generateEmojiSubmenu(updateMenu),
+		},
+		{
+			label: 'Dynamic Dock Icon',
+			type: 'checkbox',
+			visible: is.macos,
+			checked: config.get('dynamicDockIcon'),
+			click(menuItem) {
+				config.set('dynamicDockIcon', menuItem.checked);
+				// Triggers immediate icon refresh/reset
+				sendAction('update-dock-icon');
+			},
 		},
 		{
 			label: 'Bounce Dock on Message',
