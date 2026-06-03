@@ -115,6 +115,8 @@
 		],
 		"asarUnpack": [
 			"static/Icon.png",
+			"static/Icon-light.png",
+			"static/Icon-dark.png",
 			"static/sounds/**/*"
 		],
 		"appId": "com.sindresorhus.caprine",

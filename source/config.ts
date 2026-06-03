@@ -18,6 +18,7 @@ export type StoreType = {
 	};
 	menuBarMode: boolean;
 	showDockIcon: boolean;
+	dynamicDockIcon: boolean;
 	showTrayIcon: boolean;
 	alwaysOnTop: boolean;
 	showAlwaysOnTopPrompt: boolean;
@@ -110,6 +111,10 @@ const schema: Store.Schema<StoreType> = {
 		default: false,
 	},
 	showDockIcon: {
+		type: 'boolean',
+		default: true,
+	},
+	dynamicDockIcon: {
 		type: 'boolean',
 		default: true,
 	},
