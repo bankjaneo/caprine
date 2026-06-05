@@ -30,6 +30,7 @@ import tray from './tray';
 import {
 	sendAction,
 	sendBackgroundAction,
+	showAndFocusWindow,
 	messengerDomain,
 	stripTrackingFromUrl,
 } from './util';
@@ -118,11 +119,7 @@ if (!app.requestSingleInstanceLock()) {
 
 app.on('second-instance', () => {
 	if (mainWindow) {
-		if (mainWindow.isMinimized()) {
-			mainWindow.restore();
-		}
-
-		mainWindow.show();
+		showAndFocusWindow(mainWindow);
 	}
 });
 
@@ -881,6 +878,7 @@ ipc.answerRenderer(
 		notifications.set(id, notification);
 
 		notification.on('click', () => {
+			showAndFocusWindow(mainWindow);
 			sendAction('notification-callback', {callbackName: 'onclick', id});
 
 			notifications.delete(id);

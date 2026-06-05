@@ -28,6 +28,27 @@ export async function sendBackgroundAction<T, ReturnValue>(action: string, argum
 	return ipcMain.callRenderer<T, ReturnValue>(getWindow(), action, arguments_);
 }
 
+export function showAndFocusWindow(win: BrowserWindow): void {
+	if (!win || win.isDestroyed()) {
+		return;
+	}
+
+	if (win.isMinimized()) {
+		win.restore();
+	}
+
+	if (!win.isVisible()) {
+		win.show();
+	}
+
+	if (is.windows) {
+		win.setAlwaysOnTop(true);
+		win.setAlwaysOnTop(false);
+	}
+
+	win.focus();
+}
+
 export function showRestartDialog(message: string): void {
 	const buttonIndex = dialog.showMessageBoxSync(
 		getWindow(),
