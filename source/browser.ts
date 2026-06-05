@@ -583,7 +583,7 @@ async function nextConversation(): Promise<void> {
 	const index = selectedConversationIndex(1);
 
 	if (index !== -1) {
-		await selectConversation(index);
+		await selectConversation(index, 1);
 	}
 }
 
@@ -591,7 +591,7 @@ async function previousConversation(): Promise<void> {
 	const index = selectedConversationIndex(-1);
 
 	if (index !== -1) {
-		await selectConversation(index);
+		await selectConversation(index, -1);
 	}
 }
 
@@ -601,24 +601,37 @@ async function jumpToConversation(key: number): Promise<void> {
 }
 
 // Focus on the conversation with the given index
-async function selectConversation(index: number): Promise<void> {
+async function selectConversation(index: number, direction = 0): Promise<void> {
 	await elementReady(selectors.conversationList, {stopOnDomReady: false});
 
 	const rows = document.querySelectorAll<HTMLElement>(`${selectors.conversationList} [role="row"]`);
-	const conversation = rows[index];
+	const totalRows = rows.length;
 
-	if (!conversation) {
-		console.error('Could not find conversation', index);
+	if (totalRows === 0) {
 		return;
 	}
 
-	const link = conversation.querySelector<HTMLElement>('[role="link"]');
-	if (!link) {
-		console.error('Could not find link element in conversation', index);
-		return;
-	}
+	let currentIndex = ((index % totalRows) + totalRows) % totalRows;
 
-	link.click();
+	for (let attempt = 0; attempt < totalRows; attempt++) {
+		const conversation = rows[currentIndex];
+
+		if (conversation) {
+			const link = conversation.querySelector<HTMLElement>('[role="link"]');
+			if (link) {
+				link.click();
+				return;
+			}
+		}
+
+		// Skip non-link rows (e.g. ads, "show more") by advancing in the direction
+		if (direction === 0) {
+			break;
+		}
+
+		const wrappedIndex = (currentIndex + direction) % totalRows;
+		currentIndex = (wrappedIndex + totalRows) % totalRows;
+	}
 }
 
 function selectedConversationIndex(offset = 0): number {
