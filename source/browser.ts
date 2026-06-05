@@ -612,7 +612,13 @@ async function selectConversation(index: number): Promise<void> {
 		return;
 	}
 
-	conversation.querySelector<HTMLElement>('[role="link"]')!.click();
+	const link = conversation.querySelector<HTMLElement>('[role="link"]');
+	if (!link) {
+		console.error('Could not find link element in conversation', index);
+		return;
+	}
+
+	link.click();
 }
 
 function selectedConversationIndex(offset = 0): number {
@@ -1122,11 +1128,20 @@ document.addEventListener('keydown', async event => {
 		return;
 	}
 
+	if (event.key === 'Tab') {
+		event.preventDefault();
+		await (event.shiftKey ? previousConversation() : nextConversation());
+
+		return;
+	}
+
 	if (event.key === ']') {
+		event.preventDefault();
 		await nextConversation();
 	}
 
 	if (event.key === '[') {
+		event.preventDefault();
 		await previousConversation();
 	}
 
@@ -1152,7 +1167,7 @@ window.addEventListener('message', async ({data: {type, data}}) => {
 	}
 });
 
-function showNotification({id, title, body, icon, silent}: NotificationEvent): void {
+function showNotification({id, href, title, body, icon, silent}: NotificationEvent): void {
 	const image = new Image();
 	image.crossOrigin = 'anonymous';
 	image.src = icon;
@@ -1168,6 +1183,7 @@ function showNotification({id, title, body, icon, silent}: NotificationEvent): v
 
 		ipc.callMain('notification', {
 			id,
+			href,
 			title,
 			body,
 			icon: canvas.toDataURL(),
@@ -1218,8 +1234,16 @@ function insertMessageText(text: string, inputField: HTMLElement): void {
 	document.execCommand('insertText', false, text);
 }
 
-ipc.answerMain('notification-callback', (data: unknown) => {
+ipc.answerMain('notification-callback', async (data: any) => {
 	window.postMessage({type: 'notification-callback', data}, '*');
+
+	if (data.href) {
+		await elementReady(selectors.conversationList, {stopOnDomReady: false});
+		const link = document.querySelector<HTMLElement>(
+			`${selectors.conversationList} [role="row"] [role="link"][href="${data.href}"]`,
+		);
+		link?.click();
+	}
 });
 
 ipc.answerMain('notification-reply-callback', async (data: any) => {

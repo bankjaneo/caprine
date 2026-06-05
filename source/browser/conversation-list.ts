@@ -326,6 +326,7 @@ function countUnread(mutationsList: MutationRecord[]): void {
 		// Send a notification
 		ipc.callMain('notification', {
 			id: conversationId,
+			href,
 			title: titleText,
 			body: bodyText ?? 'New message',
 			icon: imgUrl,
