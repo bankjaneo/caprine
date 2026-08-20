@@ -867,6 +867,36 @@ function observeMessengerLayout(): void {
 	observer.observe(document.body, {childList: true, subtree: true});
 }
 
+function observeMediaViewer(): void {
+	if (!is.macos) {
+		return;
+	}
+
+	const adjustTopControls = () => {
+		const controls = document.querySelectorAll<HTMLElement>('[role="button"], button, [aria-label], svg');
+		for (const control of controls) {
+			const rect = control.getBoundingClientRect();
+			// If an interactive control is at the very top edge (y >= 0 && y < 20) and not in normal chat header
+			if (rect.top >= 0 && rect.top < 20 && rect.height > 0 && rect.width > 0) {
+				if (control.closest('[role="navigation"]') ?? control.closest('[role="main"] > div:first-child')) {
+					continue;
+				}
+
+				const targetElement = (control.tagName.toLowerCase() === 'svg' ? control.parentElement : control)!;
+				targetElement.style.setProperty('margin-top', '24px', 'important');
+				targetElement.style.setProperty('-webkit-app-region', 'no-drag', 'important');
+				targetElement.style.setProperty('pointer-events', 'auto', 'important');
+			}
+		}
+	};
+
+	const observer = new MutationObserver(() => {
+		adjustTopControls();
+	});
+
+	observer.observe(document.body, {childList: true, subtree: true});
+}
+
 // Inject a global style node to maintain custom appearance after conversation change or startup
 document.addEventListener('DOMContentLoaded', async () => {
 	const style = document.createElement('style');
@@ -909,6 +939,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	// Hook broken dark mode observer
 	observeThemeBugs();
 
+	// Hook media viewer top controls observer on macOS
+	observeMediaViewer();
+
 	// Inject a transparent drag bar at the top of the window on macOS.
 	// This is needed because Facebook's JS event handlers on child elements
 	// prevent -webkit-app-region: drag from working when the window is focused.
@@ -928,9 +961,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 		dragBar.style.setProperty('-webkit-app-region', 'drag');
 		document.body.append(dragBar);
 
-		const interactiveSelector = 'button, a[href], input, select, textarea, [role="button"], [role="link"], [role="search"], [contenteditable="true"]';
+		const isMediaOverlayActive = () => {
+			const {pathname} = window.location;
+			return pathname.startsWith('/stories')
+				|| pathname.startsWith('/photo')
+				|| pathname.includes('/photos/')
+				|| document.querySelector('[role="dialog"]') !== null
+				|| document.querySelector('[data-pagelet*="Story"]') !== null
+				|| document.querySelector('[data-pagelet*="MediaViewer"]') !== null
+				|| document.querySelector('[aria-label*="Story"]') !== null;
+		};
 
-		// Debounce mousemove to reduce CPU usage - only process every 100ms
+		const interactiveSelector = 'button, a, input, select, textarea, [role="button"], [role="link"], [role="search"], [role="tab"], [role="menuitem"], [contenteditable="true"], [tabindex], [aria-label], svg, path, i, [data-visualcompletion]';
+
+		const updateDragBar = (clientX: number, clientY: number) => {
+			if (clientY >= dragBarHeight) {
+				dragBar.style.pointerEvents = '';
+				return;
+			}
+
+			if (isMediaOverlayActive()) {
+				dragBar.style.pointerEvents = 'none';
+				return;
+			}
+
+			// Temporarily hide drag bar to find what's underneath
+			dragBar.style.pointerEvents = 'none';
+			const target = document.elementFromPoint(clientX, clientY);
+
+			if (target?.closest(interactiveSelector)) {
+				// Over an interactive element - keep drag bar transparent for clicks
+				return;
+			}
+
+			// Over empty space - re-enable drag bar for window dragging
+			dragBar.style.pointerEvents = '';
+		};
+
+		// Immediate check on pointerdown/mousedown so clicks are never swallowed by debouncing
+		document.addEventListener('pointerdown', (event: PointerEvent) => {
+			if (event.clientY < dragBarHeight) {
+				updateDragBar(event.clientX, event.clientY);
+			}
+		}, {capture: true, passive: true});
+
+		document.addEventListener('mousedown', (event: MouseEvent) => {
+			if (event.clientY < dragBarHeight) {
+				updateDragBar(event.clientX, event.clientY);
+			}
+		}, {capture: true, passive: true});
+
 		let debounceTimer: ReturnType<typeof setTimeout> | undefined;
 		let lastMouseX = 0;
 		let lastMouseY = 0;
@@ -938,30 +1018,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 			lastMouseX = event.clientX;
 			lastMouseY = event.clientY;
 
+			if (lastMouseY < dragBarHeight) {
+				updateDragBar(lastMouseX, lastMouseY);
+				return;
+			}
+
 			if (debounceTimer) {
 				return;
 			}
 
 			debounceTimer = setTimeout(() => {
 				debounceTimer = undefined;
-
-				if (lastMouseY >= dragBarHeight) {
-					dragBar.style.pointerEvents = '';
-					return;
-				}
-
-				// Temporarily hide drag bar to find what's underneath
-				dragBar.style.pointerEvents = 'none';
-				const target = document.elementFromPoint(lastMouseX, lastMouseY);
-
-				if (target?.closest(interactiveSelector)) {
-					// Over an interactive element - keep drag bar transparent for clicks
-					return;
-				}
-
-				// Over empty space - re-enable drag bar for window dragging
-				dragBar.style.pointerEvents = '';
-			}, 100);
+				updateDragBar(lastMouseX, lastMouseY);
+			}, 50);
 		}, {passive: true});
 	}
 });
@@ -1061,6 +1130,10 @@ function isInternalUrl(url: URL): boolean {
 		return true;
 	}
 
+	if (url.pathname.startsWith('/stories')) {
+		return true;
+	}
+
 	if (url.pathname.startsWith('/login')) {
 		return true;
 	}
@@ -1090,6 +1163,7 @@ document.addEventListener('click', (event: MouseEvent) => {
 	const currentUrl = new URL(window.location.href);
 	const isFacebookDomain = currentUrl.hostname.endsWith('.facebook.com') || currentUrl.hostname === 'www.facebook.com' || currentUrl.hostname === 'web.facebook.com';
 	const isMessagesPage = isFacebookDomain && currentUrl.pathname.startsWith('/messages');
+	const isStoriesPage = isFacebookDomain && currentUrl.pathname.startsWith('/stories');
 	const isLoginPage = isFacebookDomain && (
 		currentUrl.pathname.startsWith('/login')
 		|| currentUrl.pathname.startsWith('/checkpoint')
@@ -1098,7 +1172,7 @@ document.addEventListener('click', (event: MouseEvent) => {
 		|| currentUrl.pathname === '/'
 	);
 
-	if (!isMessagesPage && !isLoginPage) {
+	if (!isMessagesPage && !isLoginPage && !isStoriesPage) {
 		return;
 	}
 
