@@ -252,3 +252,21 @@ body.show-message-buttons .s8sjc6am.z6erz7xo.alzwoclg.jcxyg2ei.i85zmo3j.b0ur3jhr
 body.show-message-buttons .cgu29s5g.alzwoclg.oo5upp5e {
 	margin-left: 15px !important;
 }
+
+/* Story & media viewer controls */
+[role='dialog'] button,
+[role='dialog'] [role='button'],
+[role='dialog'] a,
+[role='dialog'] [aria-label],
+[role='dialog'] svg,
+[data-pagelet*='Story'] [role='button'],
+[data-pagelet*='Story'] [aria-label],
+[data-pagelet*='Story'] button,
+[data-pagelet*='Story'] a,
+[data-pagelet*='MediaViewer'] [role='button'],
+[data-pagelet*='MediaViewer'] [aria-label],
+[data-pagelet*='MediaViewer'] button,
+[data-pagelet*='MediaViewer'] a {
+	-webkit-app-region: no-drag !important;
+	pointer-events: auto !important;
+}

@@ -21,6 +21,7 @@
 		"lint": "npm run lint:xo && npm run lint:stylelint",
 		"test:tsc": "npm run build",
 		"test": "npm run test:tsc && npm run lint",
+		"dev": "npm start",
 		"start": "tsc && electron .",
 		"build": "tsc",
 		"dist:linux": "electron-builder --linux",
