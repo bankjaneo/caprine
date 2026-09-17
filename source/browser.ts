@@ -1030,10 +1030,11 @@ function handleLinkClick(event: MouseEvent, target: HTMLElement): boolean {
 				const response = await fetch(href);
 				const arrayBuffer = await response.arrayBuffer();
 				const contentType = response.headers.get('content-type') ?? 'application/octet-stream';
-				const filename
-					= link.getAttribute('download')
-					?? link.textContent?.trim()
-					?? filenameFromMimeType(contentType);
+				// Facebook renders the download control with an empty `download` attribute in
+				// some viewers, and `getAttribute` reports it as `''` — so `||` (not `??`) is
+				// required to fall through empty strings to the MIME-type fallback
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+				const filename = link.getAttribute('download') || link.textContent?.trim() || filenameFromMimeType(contentType);
 				await ipc.callMain('save-blob-file', {data: arrayBuffer, filename});
 			} catch {}
 		})();
