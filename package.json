@@ -66,6 +66,9 @@
 		"xo": "^0.57.0"
 	},
 	"xo": {
+		"ignores": [
+			"debug/**"
+		],
 		"envs": [
 			"node",
 			"browser"
