@@ -803,6 +803,7 @@ ipc.answerRenderer('navigate-to-chats', () => {
 });
 
 ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
+	filename ||= 'download';
 	const downloadsDirectory = app.getPath('downloads');
 	let savePath = path.join(downloadsDirectory, filename);
 	let counter = 1;
