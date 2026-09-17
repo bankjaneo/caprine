@@ -28,6 +28,35 @@ Elegant Facebook Messenger desktop app built with Electron.
 **Pre-push hook:** Runs `npm test` via Husky
 **Requirements:** Node.js >=16
 
+## Debugging the Live App
+
+When investigating renderer/DOM bugs (Facebook page layout, injected CSS/JS behavior), inspect the real app instead of guessing:
+
+- **Launch Caprine with a CDP port** (quit it first, then):
+
+  ```sh
+  open -a Caprine --args --remote-debugging-port=9222
+  curl http://127.0.0.1:9222/json/list   # find the facebook.com page target
+  ```
+
+- **`debug/caprine-debug.mjs`** builds self-contained payloads and sends them to a debuggable browser:
+
+  ```sh
+  # Bundle Caprine CSS from any git ref (or the worktree) into an injectable payload
+  node debug/caprine-debug.mjs css --ref facebook-migrate --out debug/payload.js
+
+  # Wrap an arbitrary JS snippet file into a payload
+  node debug/caprine-debug.mjs js debug/inspect-top-strip.js --out debug/payload.js
+
+  # Evaluate a payload in the live facebook.com page via CDP (needs Node >= 21 for built-in WebSocket)
+  node debug/caprine-debug.mjs cdp --port 9222 --payload debug/payload.js
+  ```
+
+- Reusable inspection/experiment snippets live in `debug/*.js`; generated `debug/payload*.js` are gitignored.
+- Payloads run in the page's main world with full DOM access — write them read-only where possible, and revert any mutations made during experiments.
+- Keep debug tooling out of feature PRs; commit it separately on the base branch.
+- The CDP port gives full control of the running app: local debugging only, never expose it.
+
 ## Code Style Guidelines
 
 ### TypeScript/JavaScript (via XO)
