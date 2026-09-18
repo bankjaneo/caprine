@@ -299,6 +299,24 @@ body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) [role='banner'] > 
 	--header-height: 56px;
 }
 
+/* Restyle the Close button to match the 1:1 chat viewer's controls:
+   translucent dark 36px circle with a white icon. The relative offsets nudge
+   the 36px button into the 40px container so it lands at the cluster position
+   (right: 28px, top: 12px). */
+[role='banner'] .x1s65kcs.xixxii4.x1iyjqo2 > div > span > div[role='button'] {
+	background-color: rgb(0 0 0 / 40%) !important;
+	color: rgb(255 255 255) !important;
+	width: 36px !important;
+	height: 36px !important;
+	position: relative;
+	left: 4px;
+	top: -2px;
+}
+
+[role='banner'] .x1s65kcs.xixxii4.x1iyjqo2 > div > span > div[role='button'] svg {
+	fill: rgb(255 255 255) !important;
+}
+
 /* Place the viewer's Close button in the top-right corner, matching the 1:1
    chat viewer's Close position (right: 28px, top: 12px). */
 body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) .x1s65kcs.xixxii4.x1iyjqo2 {
