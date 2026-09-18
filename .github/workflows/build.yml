@@ -19,9 +19,11 @@ jobs:
           - ubuntu-latest
           - windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: 'npm'
@@ -31,7 +33,7 @@ jobs:
         run: npm run build
       - name: Cleanup tag
         id: release_tag
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const tag = context.ref_name || context.payload.ref.replace('refs/tags/', '');
@@ -41,8 +43,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install Snapcraft
-        uses: samuelmeuli/action-snapcraft@v1
         if: startsWith(matrix.os, 'ubuntu')
+        run: sudo snap install snapcraft --classic
       - name: Package Caprine for macOS
         if: startsWith(matrix.os, 'macos')
         run: |
