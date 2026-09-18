@@ -219,5 +219,8 @@
 		"hooks": {
 			"pre-push": "npm test"
 		}
+	},
+	"allowScripts": {
+		"electron@29.4.6": true
 	}
 }
