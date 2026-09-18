@@ -317,6 +317,15 @@ body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) [role='banner'] > 
 	fill: rgb(255 255 255) !important;
 }
 
+/* Give the media photo vertical margins matching the 1:1 chat viewer (12px
+   top and bottom). Facebook's own rule for the photo is
+   `max-height: calc(100vh - 52px)`, which reserves space only for the bottom
+   filmstrip zone, so portrait photos render flush with the window edge; the
+   photo is flex-centered, so the extra 24px splits evenly. */
+[role='dialog'] img.x4ju7c5 {
+	max-height: calc(100vh - 76px) !important;
+}
+
 /* Place the viewer's Close button in the top-right corner, matching the 1:1
    chat viewer's Close position (right: 28px, top: 12px). */
 body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) .x1s65kcs.xixxii4.x1iyjqo2 {
