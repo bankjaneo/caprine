@@ -252,3 +252,58 @@ body.show-message-buttons .s8sjc6am.z6erz7xo.alzwoclg.jcxyg2ei.i85zmo3j.b0ur3jhr
 body.show-message-buttons .cgu29s5g.alzwoclg.oo5upp5e {
 	margin-left: 15px !important;
 }
+
+/* -- Media viewer header -- */
+/* Caprine zeroes --header-height on :root to remove the Facebook navbar
+   offset, but the media viewer dialog's header anchor consumes the same
+   variable (height: var(--header-height)), collapsing it to zero height and
+   flex-centering the 36px Download/Forward buttons to top: -18px, clipped in
+   half by the window edge. Restore Facebook's default value (56px) on the
+   anchor (matches `.x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk` = align-items: center;
+   height: var(--header-height); inset-inline-end: 220px; position: absolute)
+   so the buttons render fully inside the window, and move them next to the
+   Close button in the top-right corner, matching the 1:1 chat viewer's
+   layout (Download right: 116px, Forward right: 72px, both top: 12px). */
+[role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk {
+	--header-height: 56px;
+	inset-inline-end: 60px;
+	top: 2px;
+}
+
+/* Facebook mounts the media viewer's Close button portal inside a role=banner
+   element, which is hidden together with the top navigation bar above. On the
+   messages route the banner is a zero-height shell hosting only this portal,
+   so un-hide it while the media viewer dialog is open - nothing else can
+   appear. */
+body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) [role='banner'] {
+	display: block !important;
+}
+
+/* Hide the banner's other fixed children (the Facebook logo and the top-right
+   app icons) so only the viewer's Close portal remains visible. */
+body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) [role='banner'] > :not(.x1s65kcs.xixxii4.x1iyjqo2) {
+	display: none !important;
+}
+
+/* The close portal wrapper also contains a Facebook logo link next to the
+   Close button; hide it without collapsing the wrapper (visibility, not
+   display, keeps the Close button's position inside the 40px-wide wrapper). */
+[role='banner'] .x1s65kcs.xixxii4.x1iyjqo2 > a {
+	visibility: hidden !important;
+}
+
+/* The close portal wrapper consumes the same variable for its height and its
+   top: calc((var(--header-height) - 40px) / 2) centering. Inert while the
+   banner is hidden (its parent chain), so no un-scoping guard is needed. */
+.x1s65kcs.xixxii4.x1iyjqo2 {
+	--header-height: 56px;
+}
+
+/* Place the viewer's Close button in the top-right corner, matching the 1:1
+   chat viewer's Close position (right: 28px, top: 12px). */
+body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) .x1s65kcs.xixxii4.x1iyjqo2 {
+	inset-inline-start: auto;
+	inset-inline-end: 28px;
+	margin-inline-start: 0;
+	top: 4px;
+}
