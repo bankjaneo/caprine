@@ -963,6 +963,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 				dragBar.style.pointerEvents = '';
 			}, 100);
 		}, {passive: true});
+
+		// Hit-test immediately when the pointer enters the drag bar. The
+		// debounced mousemove check above can trail a fast click by up to
+		// 100ms, which makes controls near the top edge (e.g. media viewer
+		// buttons) unresponsive.
+		dragBar.addEventListener('pointerover', (event: PointerEvent) => {
+			dragBar.style.pointerEvents = 'none';
+			const target = document.elementFromPoint(event.clientX, event.clientY);
+
+			if (!target?.closest(interactiveSelector)) {
+				dragBar.style.pointerEvents = '';
+			}
+		});
 	}
 });
 
