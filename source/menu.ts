@@ -759,33 +759,37 @@ ${debugInfo()}`;
 		},
 	];
 
+	const createCommonMenuItems = (label: string, accelerator: string): MenuItemConstructorOptions[] => [
+		{
+			label,
+			accelerator,
+			click() {
+				sendAction('show-preferences');
+			},
+		},
+		{
+			type: 'separator',
+		},
+		...switchItems,
+		{
+			type: 'separator',
+		},
+		{
+			label: 'Relaunch Caprine',
+			click() {
+				app.relaunch();
+				app.quit();
+			},
+		},
+	];
+
 	const macosTemplate: MenuItemConstructorOptions[] = [
 		appMenu([
 			{
 				label: 'Caprine Preferences',
 				submenu: preferencesSubmenu,
 			},
-			{
-				label: 'Messenger Preferences…',
-				accelerator: 'Command+,',
-				click() {
-					sendAction('show-preferences');
-				},
-			},
-			{
-				type: 'separator',
-			},
-			...switchItems,
-			{
-				type: 'separator',
-			},
-			{
-				label: 'Relaunch Caprine',
-				click() {
-					app.relaunch();
-					app.quit();
-				},
-			},
+			...createCommonMenuItems('Messenger Preferences…', 'Command+,'),
 		]),
 		{
 			role: 'fileMenu',
@@ -833,27 +837,7 @@ ${debugInfo()}`;
 					label: 'Caprine Settings',
 					submenu: preferencesSubmenu,
 				},
-				{
-					label: 'Messenger Preferences',
-					accelerator: 'Control+,',
-					click() {
-						sendAction('show-preferences');
-					},
-				},
-				{
-					type: 'separator',
-				},
-				...switchItems,
-				{
-					type: 'separator',
-				},
-				{
-					label: 'Relaunch Caprine',
-					click() {
-						app.relaunch();
-						app.quit();
-					},
-				},
+				...createCommonMenuItems('Messenger Preferences', 'Control+,'),
 				{
 					role: 'quit',
 				},

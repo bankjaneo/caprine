@@ -218,43 +218,42 @@ async function toggleSounds({checked}: IToggleSounds): Promise<void> {
 
 ipc.answerMain('toggle-sounds', toggleSounds);
 
-// Get current mute state without opening preferences (for startup sync)
-ipc.answerMain('get-mute-notifications-state', async () => {
+// Opens preferences in the background, runs the callback with the
+// notification switch, and closes preferences again.
+// Returns false if the switch could not be found.
+async function withNotificationSwitch(callback: (notificationSwitch: HTMLInputElement) => boolean): Promise<boolean> {
 	const shouldClosePreferences = await openHiddenPreferences();
 
 	const notificationSwitch = document.querySelector<HTMLInputElement>(
 		selectors.notificationCheckbox,
 	);
 
-	if (notificationSwitch) {
-		const isCurrentlyChecked = notificationSwitch.getAttribute('aria-checked') === 'true';
-		const isCurrentlyMuted = !isCurrentlyChecked;
-
+	if (!notificationSwitch) {
 		if (shouldClosePreferences) {
 			await closePreferences();
 		}
 
-		return isCurrentlyMuted;
+		return false;
 	}
+
+	const result = callback(notificationSwitch);
 
 	if (shouldClosePreferences) {
 		await closePreferences();
 	}
 
-	return false;
-});
+	return result;
+}
 
-ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotifications) => {
-	const shouldClosePreferences = await openHiddenPreferences();
+// Get current mute state without opening preferences (for startup sync)
+ipc.answerMain('get-mute-notifications-state', async () =>
+	withNotificationSwitch(notificationSwitch => notificationSwitch.getAttribute('aria-checked') !== 'true'),
+);
 
-	const notificationSwitch = document.querySelector<HTMLInputElement>(
-		selectors.notificationCheckbox,
-	);
-
-	if (notificationSwitch) {
+ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotifications) =>
+	withNotificationSwitch(notificationSwitch => {
 		// Check current state
-		const isCurrentlyChecked = notificationSwitch.getAttribute('aria-checked') === 'true';
-		const isCurrentlyMuted = !isCurrentlyChecked;
+		const isCurrentlyMuted = notificationSwitch.getAttribute('aria-checked') !== 'true';
 
 		// Only toggle if current state doesn't match desired state
 		// checked=true means user wants to MUTE (turn switch OFF)
@@ -263,21 +262,10 @@ ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotific
 			notificationSwitch.click();
 		}
 
-		if (shouldClosePreferences) {
-			await closePreferences();
-		}
-
 		// Return the muted state
 		return checked;
-	}
-
-	if (shouldClosePreferences) {
-		await closePreferences();
-	}
-
-	// Return false if switch not found
-	return false;
-});
+	}),
+);
 
 ipc.answerMain('toggle-message-buttons', async () => {
 	const showMessageButtons = await ipc.callMain<undefined, boolean>('get-config-showMessageButtons');
