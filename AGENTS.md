@@ -27,7 +27,7 @@ Elegant Facebook Messenger desktop app built with Electron.
 
 **CI runs:** tsc, xo, stylelint, rpmspec validation, pacman build tests (Node.js 24)
 **Pre-push hook:** Runs `npm test` via Husky
-**Requirements:** Node.js >=16
+**Requirements:** Node.js >=22.12 (Electron 43's tooling)
 
 ## Debugging the Live App
 

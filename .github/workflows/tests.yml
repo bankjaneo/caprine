@@ -33,6 +33,25 @@ jobs:
         run: |
           npm ci
           npm run test:tsc
+  tsc-electron29:
+    # The mac x64 build runs on Electron 29.4.6; keep mainline code compatible
+    # with its type definitions on every PR, not only at release time.
+    runs-on: ubuntu-latest
+    needs: npm-cache
+    env:
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Compile TypeScript against Electron 29 (mac x64 runtime)
+        run: |
+          npm ci
+          npm install --no-save electron@29.4.6
+          npm run test:tsc
   xo:
     runs-on: ubuntu-latest
     needs: npm-cache
