@@ -47,7 +47,9 @@
 
 ## Install
 
-*macOS 10.12+ (Intel and Apple Silicon), Linux (x64 and arm64), and Windows 10+ (64-bit) are supported.*
+*macOS 10.15+ on Intel and macOS 12+ on Apple Silicon; Linux (x64 and arm64), and Windows 10+ (64-bit) are supported.*
+
+Apple Silicon builds ship a modern Electron runtime — on macOS 26/27 they get the system's Liquid Glass window controls. Intel builds intentionally keep the older Electron 29 runtime for maximum compatibility with older macOS versions; they receive no new Chromium features. If Facebook's website stops working in old Chromium, Intel users will need to update macOS (to the extent their Mac supports) or use a browser-based fallback.
 
 Download the latest version on the [website](https://github.com/sindresorhus/caprine) or below.
 
