@@ -403,7 +403,7 @@ Replace the existing "Package Caprine for macOS" step and "Upload macOS artifact
       - name: Pin Electron 29 for x64 mac build
         if: startsWith(matrix.os, 'macos')
         run: |
-          npm install --no-save --no-package-lock electron@29.4.6
+          npm install --no-save electron@29.4.6
           npm run build
       - name: Package Caprine for macOS (x64)
         if: startsWith(matrix.os, 'macos')
@@ -415,6 +415,7 @@ Replace the existing "Package Caprine for macOS" step and "Upload macOS artifact
             export CSC_IDENTITY_AUTO_DISCOVERY=false
           fi
           npm run dist:mac:x64 -- --publish never
+          mv dist/latest-mac.yml dist/latest-mac-x64.yml
           node scripts/merge-latest-mac.mjs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -460,9 +461,10 @@ Run (this verifies the exact commands CI will use):
 ```bash
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:arm64 -- --publish never
 mv dist/latest-mac.yml dist/latest-mac-arm64.yml
-npm install --no-save --no-package-lock electron@29.4.6
+npm install --no-save electron@29.4.6
 npm run build
 CSC_IDENTITY_AUTO_DISCOVERY=false npm run dist:mac:x64 -- --publish never
+mv dist/latest-mac.yml dist/latest-mac-x64.yml
 node scripts/merge-latest-mac.mjs
 ```
 

@@ -72,7 +72,7 @@ Notes:
   Windows, Linux; regenerate the lockfile). The maintainer develops on arm64
   macOS 27, so `npm start` shows the new design.
 - The mac x64 CI phase pins the legacy runtime: `npm install --no-save
-  --no-package-lock electron@29.4.6` before running tsc and packaging.
+  --no-save electron@29.4.6` before running tsc and packaging.
 - `allowScripts` in `package.json` gains `electron@43.7.3` (keep `electron@29.4.6`).
   Verify during implementation what consumes `allowScripts` today so the new
   version's install script is allowed wherever the old one is.
@@ -87,9 +87,9 @@ phases share `dist/` (both arches' artifacts are uploaded together); only the
    --publish never` → `Caprine-x.y.z-arm64-mac.zip`, `Caprine-x.y.z-arm64.dmg`,
    and a `latest-mac.yml` listing the arm64 zip. Preserve it as
    `dist/latest-mac-arm64.yml` so the next phase can't clobber it.
-2. **Pin legacy runtime:** `npm install --no-save --no-package-lock
-   electron@29.4.6`, then `npm run build` (this also type-checks the source
-   against Electron 29's type definitions — see §3).
+2. **Pin legacy runtime:** `npm install --no-save electron@29.4.6`, then `npm run
+   build` (this also type-checks the source against Electron 29's type
+   definitions — see §3).
 3. **x64 phase (Electron 29):** `npx electron-builder --mac --x64 --publish never`
    → `Caprine-x.y.z-mac.zip`, `Caprine-x.y.z.dmg`, `latest-mac.yml` with the x64
    zip. Preserve as `dist/latest-mac-x64.yml`.
