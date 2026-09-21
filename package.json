@@ -4,7 +4,7 @@
 	"version": "2.61.25",
 	"description": "Elegant Facebook Messenger desktop app",
 	"license": "MIT",
-	"repository": "sindresorhus/caprine",
+	"repository": "bankjaneo/caprine",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
@@ -26,7 +26,9 @@
 		"dist:linux": "electron-builder --linux",
 		"dist:rpm": "bash build-rpm.sh",
 		"dist:pacman": "bash build-pacman.sh",
-		"dist:mac": "electron-builder --mac",
+		"dist:mac": "electron-builder --mac --x64 --arm64",
+		"dist:mac:arm64": "electron-builder --mac --arm64",
+		"dist:mac:x64": "electron-builder --mac --x64",
 		"dist:win": "electron-builder --win",
 		"release": "np --no-publish"
 	},
@@ -112,6 +114,11 @@
 		"releaseDraft": false
 	},
 	"build": {
+		"publish": {
+			"provider": "github",
+			"owner": "bankjaneo",
+			"repo": "caprine"
+		},
 		"files": [
 			"**/*",
 			"!media${/*}"
@@ -126,13 +133,7 @@
 			"icon": "build/icon.icns",
 			"electronUpdaterCompatibility": ">=4.5.2",
 			"darkModeSupport": true,
-			"target": {
-				"target": "default",
-				"arch": [
-					"x64",
-					"arm64"
-				]
-			},
+			"target": "default",
 			"extendInfo": {
 				"LSUIElement": 1,
 				"NSCameraUsageDescription": "Caprine needs access to your camera.",
