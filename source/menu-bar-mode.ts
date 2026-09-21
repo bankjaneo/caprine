@@ -32,7 +32,7 @@ export function toggleMenuBarMode(window: BrowserWindow): void {
 		globalShortcut.unregister(menuBarShortcut);
 
 		tray.destroy();
-		app.dock.show();
+		app.dock?.show();
 		window.show();
 	}
 }

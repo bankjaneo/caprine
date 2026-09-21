@@ -4,7 +4,7 @@
 	"version": "2.61.25",
 	"description": "Elegant Facebook Messenger desktop app",
 	"license": "MIT",
-	"repository": "sindresorhus/caprine",
+	"repository": "bankjaneo/caprine",
 	"author": {
 		"name": "Sindre Sorhus",
 		"email": "sindresorhus@gmail.com",
@@ -12,7 +12,7 @@
 	},
 	"main": "dist-js",
 	"engines": {
-		"node": ">=16"
+		"node": ">=22.12"
 	},
 	"scripts": {
 		"postinstall": "patch-package && electron-builder install-app-deps",
@@ -26,7 +26,9 @@
 		"dist:linux": "electron-builder --linux",
 		"dist:rpm": "bash build-rpm.sh",
 		"dist:pacman": "bash build-pacman.sh",
-		"dist:mac": "electron-builder --mac",
+		"dist:mac": "electron-builder --mac --x64 --arm64",
+		"dist:mac:arm64": "electron-builder --mac --arm64",
+		"dist:mac:x64": "electron-builder --mac --x64",
 		"dist:win": "electron-builder --win",
 		"release": "np --no-publish"
 	},
@@ -55,7 +57,7 @@
 		"@types/facebook-locales": "^1.0.2",
 		"@types/lodash": "^4.14.202",
 		"del-cli": "^5.1.0",
-		"electron": "^29.0.1",
+		"electron": "43.7.3",
 		"electron-builder": "^24.12.0",
 		"husky": "^9.0.11",
 		"np": "^9.2.0",
@@ -63,7 +65,8 @@
 		"stylelint": "^14.10.0",
 		"stylelint-config-xo": "^0.22.0",
 		"typescript": "^5.3.3",
-		"xo": "^0.57.0"
+		"xo": "^0.57.0",
+		"yaml": "^2.9.1"
 	},
 	"xo": {
 		"ignores": [
@@ -112,6 +115,11 @@
 		"releaseDraft": false
 	},
 	"build": {
+		"publish": {
+			"provider": "github",
+			"owner": "bankjaneo",
+			"repo": "caprine"
+		},
 		"files": [
 			"**/*",
 			"!media${/*}"
@@ -126,13 +134,7 @@
 			"icon": "build/icon.icns",
 			"electronUpdaterCompatibility": ">=4.5.2",
 			"darkModeSupport": true,
-			"target": {
-				"target": "default",
-				"arch": [
-					"x64",
-					"arm64"
-				]
-			},
+			"target": "default",
 			"extendInfo": {
 				"LSUIElement": 1,
 				"NSCameraUsageDescription": "Caprine needs access to your camera.",
@@ -221,6 +223,7 @@
 		}
 	},
 	"allowScripts": {
-		"electron@29.4.6": true
+		"electron@29.4.6": true,
+		"electron@43.7.3": true
 	}
 }
