@@ -55,7 +55,7 @@
 		"@types/facebook-locales": "^1.0.2",
 		"@types/lodash": "^4.14.202",
 		"del-cli": "^5.1.0",
-		"electron": "^29.0.1",
+		"electron": "^43.7.3",
 		"electron-builder": "^24.12.0",
 		"husky": "^9.0.11",
 		"np": "^9.2.0",
@@ -221,6 +221,7 @@
 		}
 	},
 	"allowScripts": {
-		"electron@29.4.6": true
+		"electron@29.4.6": true,
+		"electron@43.7.3": true
 	}
 }

@@ -56,9 +56,9 @@ export default {
 						config.set('showDockIcon', menuItem.checked);
 
 						if (menuItem.checked) {
-							app.dock.show();
+							app.dock?.show();
 						} else {
-							app.dock.hide();
+							app.dock?.hide();
 						}
 
 						const dockMenuItem = contextMenu.getMenuItemById('dockMenu')!;
