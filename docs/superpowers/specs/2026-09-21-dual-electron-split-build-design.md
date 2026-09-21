@@ -79,8 +79,9 @@ Notes:
 
 ### 2. Build pipeline (`.github/workflows/build.yml`)
 
-The macOS packaging step becomes four sequential steps in the same job
-(clean `dist/` between phases):
+The macOS packaging step becomes four sequential steps in the same job. Both
+phases share `dist/` (both arches' artifacts are uploaded together); only the
+`latest-mac.yml` manifest is renamed between phases so the merge step can see both:
 
 1. **arm64 phase (Electron 43):** `npx electron-builder --mac --arm64
    --publish never` → `Caprine-x.y.z-arm64-mac.zip`, `Caprine-x.y.z-arm64.dmg`,
