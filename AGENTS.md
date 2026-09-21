@@ -23,6 +23,7 @@ Elegant Facebook Messenger desktop app built with Electron.
 - **Distribution**: `npm run dist:mac`, `npm run dist:linux`, `npm run dist:win`
 - **RPM builds**: `npm run dist:rpm` or `bash build-rpm.sh` (requires dist artifacts, custom script not electron-builder)
 - **Pacman builds**: `npm run dist:pacman` or `bash build-pacman.sh` (requires dist artifacts, custom script for Arch Linux packages)
+- **mac dual-runtime builds**: `npm run dist:mac:arm64` (Electron 43) and `npm run dist:mac:x64` (pins Electron 29.4.6 — run `npm install` afterwards to restore). CI's mac job runs both phases and merges `latest-mac.yml` via `scripts/merge-latest-mac.mjs`.
 
 **CI runs:** tsc, xo, stylelint, rpmspec validation, pacman build tests (Node.js 24)
 **Pre-push hook:** Runs `npm test` via Husky
@@ -111,6 +112,10 @@ When investigating renderer/DOM bugs (Facebook page layout, injected CSS/JS beha
 - Prefer attribute selectors for Facebook elements (fragile but necessary)
 - Use `!important` liberally to override Facebook's inline styles
 - Organize CSS by feature (browser.css, dark-mode.css, etc.)
+
+### Dual Electron runtime constraint
+
+Mainline source must compile and run on both Electron 29 (mac x64 runtime) and Electron 43 (arm64 mac / Windows / Linux). CI enforces the 29 side by re-running tsc against Electron 29's type definitions in the x64 packaging phase. Do not use post-29 APIs without a runtime version guard.
 
 ### Error Handling
 
