@@ -75,11 +75,12 @@ jobs:
           npm run dist:mac:x64 -- --publish never
           mv dist/latest-mac.yml dist/latest-mac-x64.yml
           node scripts/merge-latest-mac.mjs
+          rm dist/latest-mac-arm64.yml dist/latest-mac-x64.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload macOS artifacts to GitHub Release
         if: startsWith(matrix.os, 'macos')
-        run: gh release upload "${{ github.ref_name }}" dist/*.dmg dist/*.zip dist/latest*.yml --clobber --repo "${{ github.repository }}"
+        run: gh release upload "${{ github.ref_name }}" dist/*.dmg dist/*.zip dist/*.blockmap dist/latest*.yml --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package Caprine for Windows
@@ -89,7 +90,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Windows artifacts to GitHub Release
         if: startsWith(matrix.os, 'windows')
-        run: gh release upload "${{ github.ref_name }}" dist/*.exe dist/latest*.yml --clobber --repo "${{ github.repository }}"
+        run: gh release upload "${{ github.ref_name }}" dist/*.exe dist/*.blockmap dist/latest*.yml --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Package Caprine for Linux
