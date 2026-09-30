@@ -3,7 +3,7 @@ import {webFrame} from 'electron';
 import {ipcRenderer as ipc} from 'electron-better-ipc';
 import {is} from 'electron-util';
 import elementReady from 'element-ready';
-import {nativeTheme} from '@electron/remote';
+import {nativeTheme, BrowserWindow} from '@electron/remote';
 import selectors from './browser/selectors';
 import {toggleVideoAutoplay} from './autoplay';
 import {sendConversationList} from './browser/conversation-list';
@@ -964,6 +964,75 @@ document.addEventListener('DOMContentLoaded', async () => {
 				dragBar.style.pointerEvents = '';
 			}
 		});
+
+		// Fallback dragging for when the native draggable-region gesture never
+		// consumes the mousedown (issue #41: on some macOS versions and
+		// window-management setups the window only moves for a moment or not
+		// at all, while the page receives the full mouse sequence). In that
+		// state we track the mouse here and move the window ourselves. When
+		// the gesture works, the mousedown is consumed before it reaches the
+		// page and this stays dormant.
+		let dragStartWindow: {x: number; y: number} | undefined;
+		let dragStartScreen: {x: number; y: number} | undefined;
+		let isFallbackDragging = false;
+
+		const endFallbackDrag = () => {
+			dragStartWindow = undefined;
+			dragStartScreen = undefined;
+			isFallbackDragging = false;
+		};
+
+		window.addEventListener('mousedown', (event: MouseEvent) => {
+			if (event.button !== 0 || event.clientY >= dragBarHeight) {
+				return;
+			}
+
+			// Don't steal the press from controls that sit under the strip.
+			dragBar.style.pointerEvents = 'none';
+			const target = document.elementFromPoint(event.clientX, event.clientY);
+			dragBar.style.pointerEvents = '';
+
+			if (target?.closest(interactiveSelector)) {
+				return;
+			}
+
+			const bounds = BrowserWindow.getAllWindows()[0].getBounds();
+			dragStartWindow = {x: bounds.x, y: bounds.y};
+			dragStartScreen = {x: event.screenX, y: event.screenY};
+		}, {capture: true, passive: true});
+
+		window.addEventListener('mousemove', (event: MouseEvent) => {
+			if (!dragStartWindow || !dragStartScreen) {
+				return;
+			}
+
+			const deltaX = event.screenX - dragStartScreen.x;
+			const deltaY = event.screenY - dragStartScreen.y;
+
+			if (!isFallbackDragging && Math.hypot(deltaX, deltaY) < 3) {
+				return;
+			}
+
+			const bounds = BrowserWindow.getAllWindows()[0].getBounds();
+
+			if (!isFallbackDragging) {
+				// If the window is already following the cursor, the native
+				// drag is alive and we must not fight it.
+				if (Math.hypot(bounds.x - dragStartWindow.x, bounds.y - dragStartWindow.y) > 6) {
+					endFallbackDrag();
+					return;
+				}
+
+				isFallbackDragging = true;
+			}
+
+			BrowserWindow.getAllWindows()[0].setPosition(
+				dragStartWindow.x + deltaX,
+				dragStartWindow.y + deltaY,
+			);
+		}, {capture: true, passive: true});
+
+		window.addEventListener('mouseup', endFallbackDrag, {capture: true, passive: true});
 	}
 });
 
