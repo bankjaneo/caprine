@@ -115,6 +115,7 @@
 		"releaseDraft": false
 	},
 	"build": {
+		"afterPack": "build/after-pack.js",
 		"publish": {
 			"provider": "github",
 			"owner": "bankjaneo",
