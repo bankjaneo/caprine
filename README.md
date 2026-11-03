@@ -1,7 +1,7 @@
 <div align="center">
 	<br>
 	<br>
-	<a href="https://github.com/sindresorhus/caprine">
+	<a href="https://github.com/bankjaneo/caprine">
 		<img src="media/AppIcon-readme.png" width="200" height="200">
 	</a>
 	<h1>Caprine</h1>
@@ -13,15 +13,18 @@
 	<p>
 		Caprine is an unofficial and privacy-focused Facebook Messenger app with many useful features.
 	</p>
-	<b>
-		Caprine is feature complete. However, we welcome contributions for improvements and bug fixes.
-	</b>
+	<p>
+		This is a maintained fork of <a href="https://github.com/sindresorhus/caprine">sindresorhus/caprine</a>.
+		Upstream is feature complete and largely dormant, so this fork keeps the app working with the current
+		Messenger site, keeps dependencies patched, and ships builds for current macOS. Contributions for
+		improvements and bug fixes are welcome.
+	</p>
 	<br>
-		<a href="https://github.com/sindresorhus/caprine">
-		Website
-		</a>
+	<a href="https://github.com/bankjaneo/caprine/releases/latest">
+		Releases
+	</a>
 	<br>
-	<a href="https://github.com/sindresorhus/caprine/releases/latest">
+	<a href="https://github.com/bankjaneo/caprine/releases/latest">
 		<img src="media/screenshot.png" width="846">
 	</a>
 </div>
@@ -38,7 +41,7 @@
 - [Touch Bar support](#touch-bar-support-macos-only)\*
 - [Custom styles](#custom-styles)
 - Cross-platform
-- Silent auto-updates
+- Silent auto-updates (Windows and Linux AppImage)
 - Custom text size
 - Emoji style setting
 - Respects Do Not Disturb\*
@@ -51,68 +54,86 @@
 
 Apple Silicon builds ship a modern Electron runtime — on macOS 26/27 they get the system's Liquid Glass window controls. Intel builds intentionally keep the older Electron 29 runtime for maximum compatibility with older macOS versions; they receive no new Chromium features. If Facebook's website stops working in old Chromium, Intel users will need to update macOS (to the extent their Mac supports) or use a browser-based fallback.
 
-Download the latest version on the [website](https://github.com/sindresorhus/caprine) or below.
+Download the latest version from [Releases](https://github.com/bankjaneo/caprine/releases/latest) or below.
 
 ### macOS
 
-[**Download**](https://github.com/sindresorhus/caprine/releases/latest) the `.dmg` file.
+Recommended, with [Homebrew](https://brew.sh):
 
-Or with [Homebrew](https://brew.sh): `$ brew install caprine`
+```sh
+brew tap bankjaneo/tap
+brew trust --cask bankjaneo/tap/caprine # Homebrew 7+ only
+brew install --cask bankjaneo/tap/caprine
+```
+
+Use the fully qualified cask name — plain `brew install --cask caprine` installs homebrew-core's disabled upstream cask. Update with `brew upgrade --cask bankjaneo/tap/caprine`. The tap is experimental; report problems in [issue #27](https://github.com/bankjaneo/caprine/issues/27).
+
+Or [**download**](https://github.com/bankjaneo/caprine/releases/latest) the `.dmg` file (`arm64` for Apple Silicon, plain for Intel).
+
+macOS builds do not update themselves in-app yet: with the tap, Homebrew handles updates; from a `.dmg`, re-download from [Releases](https://github.com/bankjaneo/caprine/releases/latest).
+
+Builds are ad-hoc signed but not notarized yet. A download is therefore blocked by Gatekeeper on first launch — allow it in `System Settings` → `Privacy & Security`, or clear the quarantine flag yourself:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/Caprine.app
+```
 
 ### Linux
 
+Only the channels marked **Fork** below are built from this repository. **Upstream** channels are maintained by third parties from the upstream project and generally lag behind this fork (sometimes by many releases) — prefer a **Fork** channel.
+
 <table>
 	<th>Distribution</th>
-	<th>Repository</th>
+	<th>Source</th>
 	<th>Automatic Updates</th>
 	<th>Maintainer</th>
 	<th>How to install</th>
 	<tr>
-		<td>Arch Linux (Official)</td>
-		<td>GitHub</td>
+		<td>Arch Linux (manually)</td>
+		<td>Fork</td>
 		<td align="center">❌</td>
-		<td>Official</td>
+		<td>This fork</td>
 		<td>
-			<a href="https://github.com/sindresorhus/caprine/releases/latest">Download</a> the .pkg.tar.zst file
+			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .pkg.tar.zst file
 		</td>
 	</tr>
 	<tr>
 		<td>Arch Linux (AUR)</td>
-		<td>AUR</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
 		<td>Community</td>
 		<td><code>yay -S caprine</code></td>
 	</tr>
 	<tr>
 		<td>Debian / Ubuntu (manually)</td>
-		<td>GitHub</td>
+		<td>Fork</td>
 		<td align="center">❌</td>
-		<td>Official</td>
+		<td>This fork</td>
 		<td>
-			<a href="https://github.com/sindresorhus/caprine/releases/latest">Download</a> the .deb file
+			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .deb file
 		</td>
 	</tr>
 	<tr>
 		<td>Debian / Ubuntu (deb-get)</td>
-		<td>GitHub</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
-		<td>Official</td>
+		<td>deb-get</td>
 		<td>
 			Follow the <a href=#installation-using-deb-get>instructions below</a>
 		</td>
 	</tr>
 	<tr>
 		<td>Debian / Ubuntu (APT)</td>
-		<td>Gemfury</td>
+		<td>Fork</td>
 		<td align="center">✔️</td>
-		<td>Lefteris Garyfalakis</td>
+		<td>This fork</td>
 		<td>
 			Follow the <a href=#apt-repository-gemfury>instructions below</a>
 		</td>
 	</tr>
 	<tr>
 		<td>RHEL / Fedora / openSUSE (Copr)</td>
-		<td>Copr</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
 		<td>Dušan Simić</td>
 		<td>
@@ -121,25 +142,25 @@ Or with [Homebrew](https://brew.sh): `$ brew install caprine`
 	</tr>
 	<tr>
 		<td>RHEL / Fedora / openSUSE (manually)</td>
-		<td>GitHub</td>
+		<td>Fork</td>
 		<td align="center">❌</td>
-		<td>Official</td>
+		<td>This fork</td>
 		<td>
-			<a href="https://github.com/sindresorhus/caprine/releases/latest">Download</a> the .rpm file
+			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .rpm file
 		</td>
 	</tr>
 	<tr>
 		<td>AppImage</td>
-		<td>GitHub</td>
+		<td>Fork</td>
 		<td align="center">✔️</td>
-		<td>Official</td>
+		<td>This fork</td>
 		<td>
 			Follow the <a href=#appimage>instructions below</a>
 		</td>
 	</tr>
 	<tr>
 		<td>Flatpak</td>
-		<td>Flathub</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
 		<td>Dušan Simić</td>
 		<td>
@@ -148,9 +169,9 @@ Or with [Homebrew](https://brew.sh): `$ brew install caprine`
 	</tr>
 	<tr>
 		<td>Snap</td>
-		<td>Snapcraft</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
-		<td>Official</td>
+		<td>Upstream</td>
 		<td>
 			Visit <a href="https://snapcraft.io/caprine">Snapcraft</a> and follow the instructions
 		</td>
@@ -169,13 +190,13 @@ Note: deb-get is 3rd party software, not to be associated with apt-get.
 Run the following command to add it:
 
 ```sh
-wget -q -O- https://raw.githubusercontent.com/sindresorhus/caprine/main/packages/deb/addRepo.sh | sudo bash
+wget -q -O- https://raw.githubusercontent.com/bankjaneo/caprine/facebook-migrate/packages/deb/addRepo.sh | sudo bash
 ```
 
 Alternatively (for advanced users):
 ```sh
 # Add the repository
-echo "deb [trusted=yes] https://apt.fury.io/lefterisgar/ * *" > \
+echo "deb [trusted=yes] https://apt.fury.io/wdis/ * *" > \
 /etc/apt/sources.list.d/caprine.list
 
 # Update the package indexes
@@ -206,7 +227,7 @@ curl -s https://copr.fedorainfracloud.org/coprs/dusansimic/caprine/repo/opensuse
 
 #### RPM package:
 
-[Download](https://github.com/sindresorhus/caprine/releases/latest) the `.rpm` file.
+[Download](https://github.com/bankjaneo/caprine/releases/latest) the `.rpm` file.
 
 For Fedora / RHEL / AlmaLinux / Rocky Linux:
 ```sh
@@ -228,7 +249,7 @@ sudo rpm -i ./caprine-*.rpm
 **Option 1: Build from source**
 
 ```bash
-git clone https://github.com/sindresorhus/caprine
+git clone https://github.com/bankjaneo/caprine
 cd caprine
 npm ci
 npm run build
@@ -239,7 +260,7 @@ sudo pacman -U dist/caprine-*.pkg.tar.zst
 
 **Option 2: Download pre-built package**
 
-[Download](https://github.com/sindresorhus/caprine/releases/latest) the `.pkg.tar.zst` file.
+[Download](https://github.com/bankjaneo/caprine/releases/latest) the `.pkg.tar.zst` file.
 
 Install using:
 ```sh
@@ -255,7 +276,9 @@ yay -S caprine
 
 #### AppImage:
 
-[Download](https://github.com/sindresorhus/caprine/releases/latest) the `.AppImage` file.
+[Download](https://github.com/bankjaneo/caprine/releases/latest) the `.AppImage` file.
+
+AppImage builds update themselves in place once installed.
 
 Make it [executable](https://discourse.appimage.org/t/how-to-run-an-appimage/80):
 
@@ -274,27 +297,29 @@ Then run it!
 
 <table>
 	<th>Method</th>
-	<th>Repository</th>
+	<th>Source</th>
 	<th>Automatic Updates</th>
 	<th>Maintainer</th>
 	<th>How to install</th>
 	<tr>
 		<td>Manually</td>
-		<td>GitHub</td>
-		<td align="center">❌</td>
-		<td>Official</td>
+		<td>Fork</td>
+		<td align="center">✔️</td>
+		<td>This fork</td>
 		<td>
-			<a href="https://github.com/sindresorhus/caprine/releases/latest">Download</a> the .exe file
+			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .exe file
 		</td>
 	</tr>
 	<tr>
 		<td>Chocolatey</td>
-		<td>Community</td>
+		<td>Upstream</td>
 		<td align="center">✔️</td>
 		<td>Michael Quevillon</td>
 		<td><code>choco install caprine</code></td>
 	</tr>
 </table>
+
+Installed builds update themselves in place; there is nothing to download manually after the first install.
 
 *For taskbar notification badges to work on Windows 10, you'll need to [enable them in Taskbar Settings](https://www.tenforums.com/tutorials/48186-taskbar-buttons-hide-show-badges-windows-10-a.html).*
 
@@ -449,11 +474,22 @@ The main app interface is already localized by Facebook. The app menus are not l
 
 Built with [Electron](https://electronjs.org).
 
+Node.js >= 22.12 is required.
+
 ### Run
 
 ```sh
-npm install && npm start
+npm install
+npm start
 ```
+
+### Test
+
+```sh
+npm test    # TypeScript compile, XO, stylelint
+```
+
+CI additionally compiles the codebase against Electron 29's type definitions on every pull request — mainline code has to stay compatible with the Intel mac runtime, so avoid post-29 APIs or guard them at runtime.
 
 ### Build
 
@@ -465,19 +501,26 @@ Build for Linux:
 ```sh
 npm run dist:linux  # Builds AppImage and deb
 npm run dist:rpm    # Builds RPM (uses native rpmbuild)
+npm run dist:pacman # Builds a pacman package (needs an Arch Linux environment)
 ```
 
 Build for macOS:
 ```sh
-npm run dist:mac
+npm run dist:mac        # Both architectures with the default Electron
+npm run dist:mac:arm64  # Apple Silicon
+npm run dist:mac:x64    # Intel (needs the Electron 29.4.6 pin below)
 ```
+
+`dist:mac:x64` needs `electron@29.4.6` installed; CI does `npm install --no-save electron@29.4.6` first and runs `npm install` afterwards to restore the default Electron.
 
 Build for Windows:
 ```sh
 npm run dist:win
 ```
 
-**Note:** RPM packages use a custom build script (`build-rpm.sh`) with native `rpmbuild` instead of electron-builder's RPM support, which has compatibility issues with some rpmbuild versions. See the [electron-builder docs](https://www.electron.build/multi-platform-build) for more details.
+**Note:** RPM packages use a custom build script (`build-rpm.sh`) with native `rpmbuild` instead of electron-builder's RPM support, which has compatibility issues with some rpmbuild versions. See the [electron-builder docs](https://www.electron.build/multi-platform-build) for more details. The script also keeps `/usr/lib/.build-id` out of the package so it can be installed next to other Electron apps.
+
+macOS bundles are ad-hoc signed by `build/after-pack.js` when no certificate is configured. Setting `CSC_LINK`/`CSC_KEY_PASSWORD` makes electron-builder sign with a real Developer ID instead.
 
 ### Publish
 
@@ -485,9 +528,17 @@ npm run dist:win
 npm run release
 ```
 
-Then edit the automatically created GitHub Releases draft and publish.
+`np` bumps the version, commits, tags and pushes. Pushing the tag starts the build workflow, which creates the GitHub Release and uploads all artifacts. Afterwards, write the release notes and publish.
+
+Do not leave a release marked as a pre-release: the Homebrew tap's livecheck and autoupdater read `releases/latest`, which skips pre-releases, so the cask would silently stay behind.
 
 ## Maintainers
+
+Fork:
+
+- [bankjaneo](https://github.com/bankjaneo)
+
+Upstream:
 
 - [Dušan Simić](https://github.com/dusansimic)
 - [Lefteris Garyfalakis](https://github.com/lefterisgar)

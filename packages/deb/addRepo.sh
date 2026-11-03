@@ -13,7 +13,7 @@ INFO="${COL_NC}[${COL_LIGHT_YELLOW}i${COL_NC}]"
 QUESTION="${COL_NC}[${COL_LIGHT_BLUE}?${COL_NC}]"
 
 APT_SOURCE_PATH="/etc/apt/sources.list.d/caprine.list"
-APT_SOURCE_CONTENT="deb [trusted=yes] https://apt.fury.io/lefterisgar/ * *"
+APT_SOURCE_CONTENT="deb [trusted=yes] https://apt.fury.io/wdis/ * *"
 
 clear
 
