@@ -71,6 +71,9 @@ License:        MIT
 URL:            https://github.com/sindresorhus/caprine
 Vendor:         Sindre Sorhus <sindresorhus@gmail.com>
 
+%define debug_package %{nil}
+%global _build_id_links none
+
 Requires:       gtk3
 Requires:       libnotify
 Requires:       nss
@@ -141,7 +144,15 @@ EOF
 
 	rpmbuild -bb "$SPEC_FILE" --target "$TARGET_ARCH"
 
-	cp "$HOME/rpmbuild/RPMS/$TARGET_ARCH"/caprine-*.rpm "$PROJECT_DIR/dist/"
+	# /usr/lib/.build-id files conflict with other Electron packages (e.g. Slack).
+	# Guard against the macros above being dropped from the generated spec.
+	BUILT_RPM=$(echo "$HOME/rpmbuild/RPMS/$TARGET_ARCH"/caprine-*.rpm)
+	if rpm -qlp "$BUILT_RPM" | grep -q '^/usr/lib/\.build-id/'; then
+		echo "Error: $BUILT_RPM contains /usr/lib/.build-id files"
+		exit 1
+	fi
+
+	cp "$BUILT_RPM" "$PROJECT_DIR/dist/"
 	mv "$PROJECT_DIR/dist"/caprine-*."$TARGET_ARCH".rpm "$PROJECT_DIR/dist/caprine-$VERSION-$ARCH.rpm"
 	echo "RPM package built successfully: dist/caprine-$VERSION-$ARCH.rpm"
 }
