@@ -1,5 +1,5 @@
 {
-	"extends": "@sindresorhus/tsconfig",
+	"extends": "./node_modules/@sindresorhus/tsconfig/tsconfig.json",
 	"compilerOptions": {
 		"outDir": "dist-js",
 		"rootDir": "./source",
