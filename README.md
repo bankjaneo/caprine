@@ -80,88 +80,78 @@ xattr -dr com.apple.quarantine /Applications/Caprine.app
 
 ### Linux
 
-Only the channels marked **Fork** below are built from this repository. **Upstream** channels are maintained by third parties from the upstream project and generally lag behind this fork (sometimes by many releases) — prefer a **Fork** channel.
+The first group is built from this repository. The second group is maintained by third parties from the upstream project and usually lags behind this fork — prefer the first group.
+
+#### Built by this fork
 
 <table>
 	<th>Distribution</th>
-	<th>Source</th>
 	<th>Automatic Updates</th>
-	<th>Maintainer</th>
 	<th>How to install</th>
 	<tr>
-		<td>Arch Linux (manually)</td>
-		<td>Fork</td>
+		<td>Arch Linux</td>
 		<td align="center">❌</td>
-		<td>This fork</td>
 		<td>
 			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .pkg.tar.zst file
 		</td>
 	</tr>
 	<tr>
-		<td>Arch Linux (AUR)</td>
-		<td>Upstream</td>
-		<td align="center">✔️</td>
-		<td>Community</td>
-		<td><code>yay -S caprine</code></td>
-	</tr>
-	<tr>
-		<td>Debian / Ubuntu (manually)</td>
-		<td>Fork</td>
+		<td>Debian / Ubuntu</td>
 		<td align="center">❌</td>
-		<td>This fork</td>
 		<td>
 			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .deb file
 		</td>
 	</tr>
 	<tr>
-		<td>Debian / Ubuntu (deb-get)</td>
-		<td>Upstream</td>
-		<td align="center">✔️</td>
-		<td>deb-get</td>
-		<td>
-			Follow the <a href=#installation-using-deb-get>instructions below</a>
-		</td>
-	</tr>
-	<tr>
 		<td>Debian / Ubuntu (APT)</td>
-		<td>Fork</td>
 		<td align="center">✔️</td>
-		<td>This fork</td>
 		<td>
 			Follow the <a href=#apt-repository-gemfury>instructions below</a>
 		</td>
 	</tr>
 	<tr>
-		<td>RHEL / Fedora / openSUSE (Copr)</td>
-		<td>Upstream</td>
-		<td align="center">✔️</td>
-		<td>Dušan Simić</td>
-		<td>
-			Follow the <a href=#copr>instructions below</a>
-		</td>
-	</tr>
-	<tr>
-		<td>RHEL / Fedora / openSUSE (manually)</td>
-		<td>Fork</td>
+		<td>RHEL / Fedora / openSUSE</td>
 		<td align="center">❌</td>
-		<td>This fork</td>
 		<td>
 			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .rpm file
 		</td>
 	</tr>
 	<tr>
 		<td>AppImage</td>
-		<td>Fork</td>
 		<td align="center">✔️</td>
-		<td>This fork</td>
 		<td>
 			Follow the <a href=#appimage>instructions below</a>
 		</td>
 	</tr>
+</table>
+
+#### Third-party channels (may lag)
+
+<table>
+	<th>Channel</th>
+	<th>Maintainer</th>
+	<th>How to install</th>
+	<tr>
+		<td>Arch Linux (AUR)</td>
+		<td>Community</td>
+		<td><code>yay -S caprine</code></td>
+	</tr>
+	<tr>
+		<td>Debian / Ubuntu (deb-get)</td>
+		<td>deb-get</td>
+		<td>
+			Follow the <a href=#installation-using-deb-get>instructions below</a>
+		</td>
+	</tr>
+	<tr>
+		<td>RHEL / Fedora / openSUSE (Copr)</td>
+		<td>Dušan Simić</td>
+		<td>
+			Follow the <a href=#copr>instructions below</a>
+		</td>
+	</tr>
 	<tr>
 		<td>Flatpak</td>
-		<td>Upstream</td>
-		<td align="center">✔️</td>
 		<td>Dušan Simić</td>
 		<td>
 			Visit <a href="https://flathub.org/apps/details/com.sindresorhus.Caprine">Flathub</a> and follow the instructions
@@ -169,8 +159,6 @@ Only the channels marked **Fork** below are built from this repository. **Upstre
 	</tr>
 	<tr>
 		<td>Snap</td>
-		<td>Upstream</td>
-		<td align="center">✔️</td>
 		<td>Upstream</td>
 		<td>
 			Visit <a href="https://snapcraft.io/caprine">Snapcraft</a> and follow the instructions
@@ -297,29 +285,25 @@ Then run it!
 
 <table>
 	<th>Method</th>
-	<th>Source</th>
 	<th>Automatic Updates</th>
-	<th>Maintainer</th>
 	<th>How to install</th>
 	<tr>
 		<td>Manually</td>
-		<td>Fork</td>
 		<td align="center">✔️</td>
-		<td>This fork</td>
 		<td>
 			<a href="https://github.com/bankjaneo/caprine/releases/latest">Download</a> the .exe file
 		</td>
 	</tr>
 	<tr>
 		<td>Chocolatey</td>
-		<td>Upstream</td>
 		<td align="center">✔️</td>
-		<td>Michael Quevillon</td>
 		<td><code>choco install caprine</code></td>
 	</tr>
 </table>
 
 Installed builds update themselves in place; there is nothing to download manually after the first install.
+
+The Chocolatey package is maintained upstream and may lag behind this fork.
 
 *For taskbar notification badges to work on Windows 10, you'll need to [enable them in Taskbar Settings](https://www.tenforums.com/tutorials/48186-taskbar-buttons-hide-show-badges-windows-10-a.html).*
 
