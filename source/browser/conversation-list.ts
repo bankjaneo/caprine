@@ -122,10 +122,7 @@ async function getLabel(element: HTMLElement | undefined): Promise<string> {
 	}
 
 	if (label.trim() === '') {
-		const emojis: HTMLElement[] = [];
-		for (const elementCurrent of element.children) {
-			emojis.push(elementCurrent as HTMLElement);
-		}
+		const emojis: HTMLElement[] = Array.from(element.children, elementCurrent => (elementCurrent as HTMLElement));
 
 		for (const emoji of emojis) {
 			emoji.outerHTML = emoji.querySelector('img')?.getAttribute('alt') ?? '';
@@ -145,15 +142,17 @@ async function getLabel(element: HTMLElement | undefined): Promise<string> {
 // indicator from other hidden accessibility labels like "Online now", "Sent", etc.
 function isUnreadConversation(element: HTMLElement): boolean {
 	for (const child of element.querySelectorAll<HTMLElement>('div, span')) {
-		if (child.childElementCount === 0 && child.textContent?.trim()) {
-			const style = window.getComputedStyle(child);
-			if (
-				style.position === 'absolute'
-				&& (style.width === '1px' || style.height === '1px' || style.overflow === 'hidden')
-				&& child.parentElement?.classList.contains('html-span')
-			) {
-				return true;
-			}
+		if (!(child.childElementCount === 0 && child.textContent?.trim())) {
+			continue;
+		}
+
+		const style = globalThis.getComputedStyle(child);
+		if (
+			style.position === 'absolute'
+			&& (style.width === '1px' || style.height === '1px' || style.overflow === 'hidden')
+			&& child.parentElement?.classList.contains('html-span')
+		) {
+			return true;
 		}
 	}
 
@@ -164,7 +163,7 @@ async function createConversationNewDesign(element: HTMLElement): Promise<Conver
 	const conversation: Partial<Conversation> = {};
 
 	const link = element.querySelector('[role="link"]');
-	conversation.selected = Boolean(link?.getAttribute('aria-current') === 'page');
+	conversation.selected = (link?.getAttribute('aria-current') === 'page');
 	conversation.unread = isUnreadConversation(element);
 
 	let unparsedLabel: HTMLElement | undefined;
@@ -353,16 +352,18 @@ function getUnreadCount(): number {
 	let count = 0;
 
 	for (const row of rows) {
-		if (isUnreadConversation(row)) {
-			// Skip muted conversations from badge count
-			const isMuted = Boolean(row.querySelector(selectors.mutedConversation));
-
-			if (isMuted) {
-				continue;
-			}
-
-			count++;
+		if (!isUnreadConversation(row)) {
+			continue;
 		}
+
+		// Skip muted conversations from badge count
+		const isMuted = Boolean(row.querySelector(selectors.mutedConversation));
+
+		if (isMuted) {
+			continue;
+		}
+
+		count++;
 	}
 
 	return count;

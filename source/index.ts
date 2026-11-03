@@ -378,12 +378,14 @@ function createMainWindow(): BrowserWindow {
 	setUserLocale();
 	initRequestsFiltering();
 
-	let previousDarkMode = darkMode.isEnabled;
+	let isPreviousDarkMode = darkMode.isEnabled;
 	darkMode.onChange(() => {
-		if (darkMode.isEnabled !== previousDarkMode) {
-			previousDarkMode = darkMode.isEnabled;
-			win.webContents.send('set-theme');
+		if (darkMode.isEnabled === isPreviousDarkMode) {
+			return;
 		}
+
+		isPreviousDarkMode = darkMode.isEnabled;
+		win.webContents.send('set-theme');
 	});
 
 	if (is.macos) {
@@ -408,17 +410,19 @@ function createMainWindow(): BrowserWindow {
 			mainWindow.setFullScreen(false);
 		}
 
-		if (!isQuitting) {
-			event.preventDefault();
+		if (isQuitting) {
+			return;
+		}
 
-			// Workaround for https://github.com/electron/electron/issues/10023
-			win.blur();
-			if (is.macos) {
-				// On macOS we're using `app.hide()` in order to focus the previous window correctly
-				app.hide();
-			} else {
-				win.hide();
-			}
+		event.preventDefault();
+
+		// Workaround for https://github.com/electron/electron/issues/10023
+		win.blur();
+		if (is.macos) {
+			// On macOS we're using `app.hide()` in order to focus the previous window correctly
+			app.hide();
+		} else {
+			win.hide();
 		}
 	});
 
@@ -452,7 +456,7 @@ function createMainWindow(): BrowserWindow {
 	if (is.windows) {
 		const jumpToConversationMatch = process.argv.find(argument => /^--jump-to-conversation=\d+$/.test(argument));
 		if (jumpToConversationMatch) {
-			const conversationIndex = Number.parseInt(jumpToConversationMatch.split('=')[1], 10);
+			const conversationIndex = Number.parseInt(jumpToConversationMatch.split('=', 2)[1], 10);
 			await ipc.callRenderer(mainWindow, 'jump-to-conversation', conversationIndex);
 		}
 	}
@@ -550,7 +554,7 @@ function createMainWindow(): BrowserWindow {
 			}
 
 			const items = conversations.slice(0, 10).map(({label, icon}, index) => ({
-				label: `${label}`,
+				label,
 				icon: nativeImage.createFromDataURL(icon),
 				click() {
 					mainWindow.show();
@@ -662,7 +666,7 @@ function createMainWindow(): BrowserWindow {
 		);
 
 		if (is.macos) {
-			await import('./touch-bar');
+			await import('./touch-bar.js');
 		}
 	});
 
@@ -874,7 +878,7 @@ ipc.answerRenderer(
 			title,
 			body: config.get('notificationMessagePreview') ? body : 'You have a new message',
 			hasReply: true,
-			...(icon ? {icon: nativeImage.createFromDataURL(icon)} : {}),
+			...(icon && {icon: nativeImage.createFromDataURL(icon)}),
 			silent: silent || is.linux || is.macos,
 		});
 
@@ -934,12 +938,14 @@ ipc.answerRenderer(
 		notification.show();
 
 		// Request window attention on Linux (Wayland-compatible)
-		if (is.linux && config.get('flashWindowOnMessage')) {
-			mainWindow.flashFrame(true);
-			setTimeout(() => {
-				mainWindow.flashFrame(false);
-			}, 2000);
+		if (!(is.linux && config.get('flashWindowOnMessage'))) {
+			return;
 		}
+
+		mainWindow.flashFrame(true);
+		setTimeout(() => {
+			mainWindow.flashFrame(false);
+		}, 2000);
 	},
 );
 

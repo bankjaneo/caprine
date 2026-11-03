@@ -64,10 +64,12 @@ export function showRestartDialog(message: string): void {
 		},
 	);
 
-	if (buttonIndex === 0) {
-		app.relaunch();
-		app.quit();
+	if (buttonIndex !== 0) {
+		return;
 	}
+
+	app.relaunch();
+	app.quit();
 }
 
 export const messengerDomain = 'facebook.com';
@@ -82,10 +84,10 @@ export function stripTrackingFromUrl(url: string): string {
 }
 
 export const toggleTrayIcon = (): void => {
-	const showTrayIconState = config.get('showTrayIcon');
-	config.set('showTrayIcon', !showTrayIconState);
+	const isShowTrayIconState = config.get('showTrayIcon');
+	config.set('showTrayIcon', !isShowTrayIconState);
 
-	if (showTrayIconState) {
+	if (isShowTrayIconState) {
 		tray.destroy();
 	} else {
 		tray.create(getWindow());

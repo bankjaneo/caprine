@@ -74,7 +74,8 @@ export default {
 					visible: !config.get('showDockIcon'),
 					submenu: Menu.getApplicationMenu()!,
 				},
-			] : [];
+			]
+			: [];
 
 		contextMenu = Menu.buildFromTemplate([
 			{
@@ -127,8 +128,8 @@ export default {
 
 		const shouldShowUnread = messageCount > 0;
 
-		const currentHasUnread = previousMessageCount > 0;
-		if (shouldShowUnread === currentHasUnread && messageCount === previousMessageCount) {
+		const isCurrentHasUnread = previousMessageCount > 0;
+		if (shouldShowUnread === isCurrentHasUnread && messageCount === previousMessageCount) {
 			return;
 		}
 

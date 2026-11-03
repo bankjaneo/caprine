@@ -63,30 +63,32 @@ function getSpellCheckerLanguages(): MenuItemConstructorOptions[] {
 	let languagesChecked = config.get('spellCheckerLanguages');
 
 	for (const language of languagesChecked) {
-		if (!availableLanguages.includes(language)) {
-			// Remove it since it's not in the spell checker dictionary.
-			languagesChecked = languagesChecked.filter(currentLang => currentLang !== language);
-			config.set('spellCheckerLanguages', languagesChecked);
+		if (availableLanguages.includes(language)) {
+			continue;
 		}
+
+		// Remove it since it's not in the spell checker dictionary.
+		languagesChecked = languagesChecked.filter(currentLang => currentLang !== language);
+		config.set('spellCheckerLanguages', languagesChecked);
 	}
 
 	for (const language of availableLanguages) {
 		languageItem.push(
 			{
-				label: languageToCode.get(language) ?? languageToCode.get(language.split('-')[0]) ?? language,
+				label: languageToCode.get(language) ?? languageToCode.get(language.split('-', 1)[0]) ?? language,
 				type: 'checkbox',
 				checked: languagesChecked.includes(language),
 				click() {
 					const index = languagesChecked.indexOf(language);
-					if (index > -1) {
-						// Remove language
-						languagesChecked.splice(index, 1);
-						config.set('spellCheckerLanguages', languagesChecked);
-					} else {
+					if (index === -1) {
 						// Add language
 						languagesChecked = [...languagesChecked, language];
-						config.set('spellCheckerLanguages', languagesChecked);
+					} else {
+						// Remove language
+						languagesChecked.splice(index, 1);
 					}
+
+					config.set('spellCheckerLanguages', languagesChecked);
 
 					session.defaultSession.setSpellCheckerLanguages(languagesChecked);
 				},

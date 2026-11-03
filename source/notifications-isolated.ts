@@ -78,4 +78,4 @@
 	);
 
 	Object.assign(window, {notification: augmentedNotification});
-})(window, Notification);
+})(globalThis, Notification);

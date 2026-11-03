@@ -1,0 +1,17 @@
+diff --git a/node_modules/temp/node_modules/rimraf/rimraf.js b/node_modules/temp/node_modules/rimraf/rimraf.js
+index e80dd10..68c6767 100644
+--- a/node_modules/temp/node_modules/rimraf/rimraf.js
++++ b/node_modules/temp/node_modules/rimraf/rimraf.js
+@@ -66,7 +66,11 @@ function rimraf (p, options, cb) {
+     if (!er)
+       return afterGlob(null, [p])
+ 
+-    glob(p, options.glob, afterGlob)
++    try {
++      afterGlob(null, glob.sync(p, options.glob))
++    } catch (er) {
++      afterGlob(er)
++    }
+   })
+ 
+   function next (er) {

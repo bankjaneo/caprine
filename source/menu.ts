@@ -218,7 +218,8 @@ export default async function updateMenu(): Promise<Menu> {
 			label: 'Custom Styles',
 			click() {
 				const filePath = path.join(app.getPath('userData'), 'custom.css');
-				const defaultCustomStyle = `/*
+				if (!existsSync(filePath)) {
+					const defaultCustomStyle = `/*
 This is the custom styles file where you can add anything you want.
 The styles here will be injected into Caprine and will override default styles.
 If you want to disable styles but keep the config, just comment the lines that you don't want to be used.
@@ -226,8 +227,6 @@ If you want to disable styles but keep the config, just comment the lines that y
 Press Command/Ctrl+R in Caprine to see your changes.
 */
 `;
-
-				if (!existsSync(filePath)) {
 					writeFileSync(filePath, defaultCustomStyle, 'utf8');
 				}
 
@@ -238,8 +237,12 @@ Press Command/Ctrl+R in Caprine to see your changes.
 
 	const preferencesSubmenu: MenuItemConstructorOptions[] = [
 		{
-			/* TODO: Fix privacy features */
-			/* If you want to help, see #1688 */
+			/*
+			TODO: Fix privacy features
+			*/
+			/*
+			If you want to help, see #1688
+			*/
 			label: 'Privacy',
 			visible: is.development,
 			submenu: privacySubmenu,
@@ -258,8 +261,12 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			/* TODO: Fix ability to disable autoplay */
-			/* GitHub issue: #1845 */
+			/*
+			TODO: Fix ability to disable autoplay
+			*/
+			/*
+			GitHub issue: #1845
+			*/
 			label: 'Autoplay Videos',
 			id: 'video-autoplay',
 			type: 'checkbox',
@@ -380,7 +387,9 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			/* TODO: Add support for Linux */
+			/*
+			TODO: Add support for Linux
+			*/
 			label: 'Launch at Login',
 			visible: !is.linux,
 			type: 'checkbox',
@@ -420,7 +429,9 @@ Press Command/Ctrl+R in Caprine to see your changes.
 			},
 		},
 		{
-			/* TODO: Fix notifications */
+			/*
+			TODO: Fix notifications
+			*/
 			label: 'Flash Window on Message',
 			type: 'checkbox',
 			visible: is.development,

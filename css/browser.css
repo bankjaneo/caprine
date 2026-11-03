@@ -329,8 +329,7 @@ body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) [role='banner'] > 
 /* Place the viewer's Close button in the top-right corner, matching the 1:1
    chat viewer's Close position (right: 28px, top: 12px). */
 body:has([role='dialog'] .x6s0dn4.x1s65kcs.x1pak89f.x10l6tqk) .x1s65kcs.xixxii4.x1iyjqo2 {
-	inset-inline-start: auto;
-	inset-inline-end: 28px;
+	inset-inline: auto 28px;
 	margin-inline-start: 0;
 	top: 4px;
 }

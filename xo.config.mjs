@@ -1,0 +1,76 @@
+import globals from 'globals';
+
+const config = [
+	{
+		ignores: [
+			'debug/**',
+			'css/**',
+			'package.json',
+			'README.md',
+		],
+	},
+	{
+		languageOptions: {
+			globals: {
+				...globals.node,
+				...globals.browser,
+			},
+		},
+		rules: {
+			'@typescript-eslint/ban-ts-comment': 'off',
+			'@typescript-eslint/consistent-type-imports': 'off',
+			'@typescript-eslint/naming-convention': 'off',
+			'@typescript-eslint/no-floating-promises': 'off',
+			'@typescript-eslint/no-loop-func': 'off',
+			'@typescript-eslint/no-non-null-assertion': 'off',
+			'@typescript-eslint/no-require-imports': 'off',
+			'@typescript-eslint/no-unsafe-argument': 'off',
+			'@typescript-eslint/no-unsafe-assignment': 'off',
+			'@typescript-eslint/no-unsafe-call': 'off',
+			'@typescript-eslint/no-unsafe-enum-comparison': 'off',
+			'@typescript-eslint/no-var-requires': 'off',
+			'import/extensions': 'off',
+			'import-x/no-anonymous-default-export': 'off',
+			'import-x/no-cycle': 'off',
+			'n/file-extension-in-import': 'off',
+			'unicorn/prefer-at': 'off',
+			'unicorn/prefer-module': 'off',
+			'unicorn/prefer-top-level-await': 'off',
+
+			// Rules introduced by the XO 5 upgrade that are not adopted yet.
+			'@typescript-eslint/await-thenable': 'off',
+			'@typescript-eslint/no-deprecated': 'off',
+			'@typescript-eslint/no-shadow': 'off',
+			'@typescript-eslint/no-unsafe-member-access': 'off',
+			'@typescript-eslint/strict-boolean-expressions': 'off',
+			'@typescript-eslint/strict-void-return': 'off',
+			'@typescript-eslint/switch-exhaustiveness-check': 'off',
+			'jsdoc/require-description': 'off',
+			'n/prefer-global/buffer': 'off',
+			'n/prefer-process-get-builtin-module': 'off',
+			'require-unicode-regexp': 'off',
+			'unicorn/consistent-boolean-name': 'off',
+			'unicorn/consistent-compound-words': 'off',
+			'unicorn/max-nested-calls': 'off',
+			'unicorn/no-anonymous-default-export': 'off',
+			'unicorn/no-array-reverse': 'off',
+			'unicorn/no-break-in-nested-loop': 'off',
+			'unicorn/no-computed-property-existence-check': 'off',
+			'unicorn/no-declarations-before-early-exit': 'off',
+			'unicorn/no-immediate-mutation': 'off',
+			'unicorn/no-late-event-control': 'off',
+			'unicorn/no-non-function-verb-prefix': 'off',
+			'unicorn/no-top-level-side-effects': 'off',
+			'unicorn/no-unnecessary-global-this': 'off',
+			'unicorn/no-unsafe-string-replacement': 'off',
+			'unicorn/prefer-combined-guards': 'off',
+			'unicorn/prefer-early-return': 'off',
+			'unicorn/prefer-else-if': 'off',
+			'unicorn/prefer-number-coercion': 'off',
+			'unicorn/prefer-simple-condition-first': 'off',
+			'unicorn/prefer-ternary': 'off',
+		},
+	},
+];
+
+export default config;

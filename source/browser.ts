@@ -62,8 +62,8 @@ ipc.answerMain('create-channel', async () => {
 });
 
 ipc.answerMain('log-out', async () => {
-	const useWorkChat = await ipc.callMain<undefined, boolean>('get-config-useWorkChat');
-	if (useWorkChat) {
+	const isUseWorkChat = await ipc.callMain<undefined, boolean>('get-config-useWorkChat');
+	if (isUseWorkChat) {
 		document.querySelector<HTMLElement>('._5lxs._3qct._p')!.click();
 
 		// Menu creation is slow
@@ -236,13 +236,13 @@ async function withNotificationSwitch(callback: (notificationSwitch: HTMLInputEl
 		return false;
 	}
 
-	const result = callback(notificationSwitch);
+	const isResult = callback(notificationSwitch);
 
 	if (shouldClosePreferences) {
 		await closePreferences();
 	}
 
-	return result;
+	return isResult;
 }
 
 // Get current mute state without opening preferences (for startup sync)
@@ -268,8 +268,8 @@ ipc.answerMain('toggle-mute-notifications', async ({checked}: IToggleMuteNotific
 );
 
 ipc.answerMain('toggle-message-buttons', async () => {
-	const showMessageButtons = await ipc.callMain<undefined, boolean>('get-config-showMessageButtons');
-	document.body.classList.toggle('show-message-buttons', !showMessageButtons);
+	const isShowMessageButtons = await ipc.callMain<undefined, boolean>('get-config-showMessageButtons');
+	document.body.classList.toggle('show-message-buttons', !isShowMessageButtons);
 });
 
 async function openSettingsMenuAndClickItem(
@@ -293,15 +293,15 @@ async function openSettingsMenuAndClickItem(
 	);
 
 	for (const item of menuItems) {
-		let matches: boolean;
+		let isMatches: boolean;
 		if (typeof identifier === 'string') {
 			const text = item.textContent?.trim();
-			matches = options?.useExactMatch ? text === identifier : Boolean(text?.includes(identifier));
+			isMatches = options?.useExactMatch ? text === identifier : text?.includes(identifier);
 		} else {
-			matches = Boolean(item.querySelector(`path[d^="${identifier.svgPathPrefix}"]`));
+			isMatches = Boolean(item.querySelector(`path[d^="${CSS.escape(identifier.svgPathPrefix)}"]`));
 		}
 
-		if (matches) {
+		if (isMatches) {
 			item.click();
 			break;
 		}
@@ -349,12 +349,12 @@ async function setTheme(): Promise<void> {
 }
 
 function setThemeElement(element: HTMLElement): void {
-	const useDarkColors = Boolean(nativeTheme.shouldUseDarkColors);
-	element.classList.toggle('dark-mode', useDarkColors);
-	element.classList.toggle('light-mode', !useDarkColors);
-	element.classList.toggle('__fb-dark-mode', useDarkColors);
-	element.classList.toggle('__fb-light-mode', !useDarkColors);
-	removeThemeClasses(useDarkColors);
+	const isUseDarkColors = nativeTheme.shouldUseDarkColors;
+	element.classList.toggle('dark-mode', isUseDarkColors);
+	element.classList.toggle('light-mode', !isUseDarkColors);
+	element.classList.toggle('__fb-dark-mode', isUseDarkColors);
+	element.classList.toggle('__fb-light-mode', !isUseDarkColors);
+	removeThemeClasses(isUseDarkColors);
 }
 
 function removeThemeClasses(useDarkColors: boolean): void {
@@ -368,10 +368,14 @@ function removeThemeClasses(useDarkColors: boolean): void {
 }
 
 async function observeTheme(): Promise<void> {
-	/* Listen for native theme changes (e.g., OS theme change when themeSource is 'system') */
+	/*
+	Listen for native theme changes (e.g., OS theme change when themeSource is 'system')
+	*/
 	nativeTheme.on('updated', setTheme);
 
-	/* Main document's class list */
+	/*
+	Main document's class list
+	*/
 	const observer = new MutationObserver((records: MutationRecord[]) => {
 		// Find records that had class attribute changed
 		const classRecords = records.filter(record => record.type === 'attributes' && record.attributeName === 'class');
@@ -388,7 +392,9 @@ async function observeTheme(): Promise<void> {
 
 	observer.observe(document.documentElement, {attributes: true, attributeFilter: ['class']});
 
-	/* Added nodes (dialogs, etc.) */
+	/*
+	Added nodes (dialogs, etc.)
+	*/
 	const observerNew = new MutationObserver((records: MutationRecord[]) => {
 		const nodeRecords = records.filter(record => record.addedNodes.length > 0);
 		for (const nodeRecord of nodeRecords) {
@@ -402,7 +408,9 @@ async function observeTheme(): Promise<void> {
 		}
 	});
 
-	/* Observe only elements where new nodes may need dark mode */
+	/*
+	Observe only elements where new nodes may need dark mode
+	*/
 	const menuElements = await elementReady('.j83agx80.cbu4d94t.l9j0dhe7.jgljxmt5.be9z9djy > div:nth-of-type(2) > div', {stopOnDomReady: false});
 	if (menuElements) {
 		observerNew.observe(menuElements, {childList: true});
@@ -415,8 +423,8 @@ async function observeTheme(): Promise<void> {
 }
 
 async function setPrivateMode(): Promise<void> {
-	const privateMode = await ipc.callMain<undefined, boolean>('get-config-privateMode');
-	document.documentElement.classList.toggle('private-mode', privateMode);
+	const isPrivateMode = await ipc.callMain<undefined, boolean>('get-config-privateMode');
+	document.documentElement.classList.toggle('private-mode', isPrivateMode);
 
 	if (is.macos) {
 		sendConversationList();
@@ -646,13 +654,15 @@ async function setZoom(zoomFactor: number): Promise<void> {
 	await ipc.callMain<number, void>('set-config-zoomFactor', zoomFactor);
 }
 
-/** Finds a menu item in [role=menu] by its icon SVG path prefix (language-independent). */
+/**
+Finds a menu item in [role=menu] by its icon SVG path prefix (language-independent).
+*/
 function findMenuItemByIconPath(svgPathPrefix: string): HTMLElement | undefined {
 	const items = document.querySelectorAll<HTMLElement>(
 		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
 	);
 	for (const item of items) {
-		if (item.querySelector(`path[d^="${svgPathPrefix}"]`)) {
+		if (item.querySelector(`path[d^="${CSS.escape(svgPathPrefix)}"]`)) {
 			return item;
 		}
 	}
@@ -660,19 +670,25 @@ function findMenuItemByIconPath(svgPathPrefix: string): HTMLElement | undefined 
 	return undefined;
 }
 
-/** Returns all [role=menuitem] elements in the currently open conversation menu. */
+/**
+Returns all [role=menuitem] elements in the currently open conversation menu.
+*/
 function getConversationMenuItems(): HTMLElement[] {
 	return [...document.querySelectorAll<HTMLElement>(
 		`${selectors.conversationMenuSelectorNewDesign} [role=menuitem]`,
 	)];
 }
 
-/** Finds the Mute menu item: SVG path first, positional fallback (always index 1). */
+/**
+Finds the Mute menu item: SVG path first, positional fallback (always index 1).
+*/
 function findMuteMenuItem(): HTMLElement | undefined {
 	return findMenuItemByIconPath('M109.362 211') ?? getConversationMenuItems()[1] ?? undefined;
 }
 
-/** Finds the Delete menu item: SVG path first, fallback via Report item anchor. */
+/**
+Finds the Delete menu item: SVG path first, fallback via Report item anchor.
+*/
 function findDeleteMenuItem(): HTMLElement | undefined {
 	const byPath = findMenuItemByIconPath('M8.75');
 	if (byPath) {
@@ -685,14 +701,12 @@ function findDeleteMenuItem(): HTMLElement | undefined {
 }
 
 async function withConversationMenu(callback: () => void): Promise<void> {
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	let menuButton: HTMLElement | null = null;
 	const conversation = document.querySelector<HTMLElement>(selectors.selectedConversation)!.closest('[role=row]');
 
 	// Find the menu button: the [role=button] whose parent has 'html-div' class (language-independent)
 	// The conversation row may have multiple [role=button] elements (e.g., "View profile" + "More options")
 	const buttons = conversation?.querySelectorAll<HTMLElement>('[role=button]');
-	menuButton = [...(buttons ?? [])].find(button => button.parentElement?.classList.contains('html-div')) ?? null;
+	const menuButton = [...(buttons ?? [])].find(button => button.parentElement?.classList.contains('html-div')) ?? undefined;
 
 	if (menuButton) {
 		await withMenu(menuButton, callback);
@@ -744,10 +758,12 @@ async function closePreferences(): Promise<void> {
 		const removedRecords = records.filter(({removedNodes}) => removedNodes.length > 0 && (removedNodes[0] as HTMLElement).tagName === 'DIV');
 
 		// In case there is a div removed, hide utility class and stop observing
-		if (removedRecords.length > 0) {
-			document.documentElement.classList.remove('hide-preferences-window');
-			preferencesOverlayObserver.disconnect();
+		if (removedRecords.length === 0) {
+			return;
 		}
+
+		document.documentElement.classList.remove('hide-preferences-window');
+		preferencesOverlayObserver.disconnect();
 	});
 
 	const preferencesOverlay = document.querySelector(selectors.preferencesSelector)!;
@@ -774,8 +790,7 @@ async function observeAutoscroll(): Promise<void> {
 	}
 
 	const scrollToBottom = (): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		const scrollableElement: HTMLElement | null = document.querySelector('[role=presentation] .scrollable');
+		const scrollableElement: HTMLElement | undefined = document.querySelector('[role=presentation] .scrollable') ?? undefined;
 		if (scrollableElement) {
 			scrollableElement.scroll({
 				top: Number.MAX_SAFE_INTEGER,
@@ -797,10 +812,10 @@ async function observeAutoscroll(): Promise<void> {
 				const newMessages: MutationRecord[] = record.filter(record =>
 					// The mutation is an addition
 					record.addedNodes.length > 0
-						// ... of a div       (skip the "seen" status change)
-						&& (record.addedNodes[0] as HTMLElement).tagName === 'DIV'
-						// ... on the last child       (skip previous messages added when scrolling up)
-						&& chatElement.lastChild!.contains(record.target),
+					// ... of a div       (skip the "seen" status change)
+					&& (record.addedNodes[0] as HTMLElement).tagName === 'DIV'
+					// ... on the last child       (skip previous messages added when scrolling up)
+					&& chatElement.lastChild!.contains(record.target),
 				);
 
 				if (newMessages.length > 0) {
@@ -826,7 +841,7 @@ async function observeThemeBugs(): Promise<void> {
 			.filter(record => record.addedNodes.length > 0 || record.removedNodes.length > 0);
 
 		if (newNodes) {
-			removeThemeClasses(Boolean(nativeTheme.shouldUseDarkColors));
+			removeThemeClasses(nativeTheme.shouldUseDarkColors);
 		}
 	});
 
@@ -834,7 +849,7 @@ async function observeThemeBugs(): Promise<void> {
 }
 
 // Listen for emoji element dom insertion
-document.addEventListener('animationstart', insertionListener, false);
+document.addEventListener('animationstart', insertionListener, {capture: false});
 
 // Inject a CSS class on the messenger layout container to enable proper styling
 function injectMessengerLayoutClass(): void {
@@ -982,7 +997,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			isFallbackDragging = false;
 		};
 
-		window.addEventListener('mousedown', (event: MouseEvent) => {
+		globalThis.addEventListener('mousedown', (event: MouseEvent) => {
 			if (event.button !== 0 || event.clientY >= dragBarHeight) {
 				return;
 			}
@@ -1001,7 +1016,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 			dragStartScreen = {x: event.screenX, y: event.screenY};
 		}, {capture: true, passive: true});
 
-		window.addEventListener('mousemove', (event: MouseEvent) => {
+		globalThis.addEventListener('mousemove', (event: MouseEvent) => {
 			if (!dragStartWindow || !dragStartScreen) {
 				return;
 			}
@@ -1032,12 +1047,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 			);
 		}, {capture: true, passive: true});
 
-		window.addEventListener('mouseup', endFallbackDrag, {capture: true, passive: true});
+		globalThis.addEventListener('mouseup', endFallbackDrag, {capture: true, passive: true});
 	}
 });
 
 // Handle title bar double-click.
-window.addEventListener('dblclick', (event: Event) => {
+globalThis.addEventListener('dblclick', (event: Event) => {
 	const target = event.target as HTMLElement;
 	const titleBar = target.closest('._36ic._5l-3,._5742,._6-xk,._673w');
 
@@ -1060,7 +1075,7 @@ function filenameFromMimeType(mimeType: string): string {
 		'audio/mpeg': 'audio.mp3',
 		'application/zip': 'archive.zip',
 	};
-	const base = mimeType.split(';')[0]?.trim() ?? '';
+	const base = mimeType.split(';', 1)[0]?.trim() ?? '';
 	return extension[base] ?? 'download';
 }
 
@@ -1071,19 +1086,11 @@ function handleLinkClick(event: MouseEvent, target: HTMLElement): boolean {
 	}
 
 	const href = link.getAttribute('href');
-	if (!href) {
+	if (!href || href.startsWith('#') || href.toLowerCase().startsWith('javascript')) {
 		return false;
 	}
 
-	if (href.startsWith('#')) {
-		return false;
-	}
-
-	if (href.toLowerCase().startsWith('javascript')) {
-		return false;
-	}
-
-	const fullUrl = href.startsWith('http') ? href : new URL(href, window.location.href).href;
+	const fullUrl = href.startsWith('http') ? href : new URL(href, location.href).href;
 	const url = new URL(fullUrl);
 
 	if (isInternalUrl(url)) {
@@ -1124,41 +1131,13 @@ function handleLinkClick(event: MouseEvent, target: HTMLElement): boolean {
 function isInternalUrl(url: URL): boolean {
 	const isFacebookDomain = url.hostname.endsWith('.facebook.com') || url.hostname === 'www.facebook.com' || url.hostname === 'web.facebook.com';
 
-	if (!isFacebookDomain) {
-		return false;
-	}
-
-	if (url.pathname.startsWith('/messages')) {
-		return true;
-	}
-
-	if (url.pathname.startsWith('/login')) {
-		return true;
-	}
-
-	if (url.pathname.startsWith('/checkpoint')) {
-		return true;
-	}
-
-	if (url.pathname.startsWith('/two_step_verification')) {
-		return true;
-	}
-
-	if (url.pathname.startsWith('/two_factor')) {
-		return true;
-	}
-
-	if (url.pathname === '/' || url.pathname === '') {
-		return true;
-	}
-
-	return false;
+	return isFacebookDomain ? (url.pathname.startsWith('/messages') || url.pathname.startsWith('/login') || url.pathname.startsWith('/checkpoint') || url.pathname.startsWith('/two_step_verification') || url.pathname.startsWith('/two_factor') || url.pathname === '/' || url.pathname === '') : false;
 }
 
 document.addEventListener('click', (event: MouseEvent) => {
 	const target = event.target as HTMLElement;
 
-	const currentUrl = new URL(window.location.href);
+	const currentUrl = new URL(location.href);
 	const isFacebookDomain = currentUrl.hostname.endsWith('.facebook.com') || currentUrl.hostname === 'www.facebook.com' || currentUrl.hostname === 'web.facebook.com';
 	const isMessagesPage = isFacebookDomain && currentUrl.pathname.startsWith('/messages');
 	const isLoginPage = isFacebookDomain && (
@@ -1169,11 +1148,7 @@ document.addEventListener('click', (event: MouseEvent) => {
 		|| currentUrl.pathname === '/'
 	);
 
-	if (!isMessagesPage && !isLoginPage) {
-		return;
-	}
-
-	if (target.tagName === 'IMG') {
+	if ((!isMessagesPage && !isLoginPage) || (target.tagName === 'IMG')) {
 		return;
 	}
 
@@ -1183,15 +1158,17 @@ document.addEventListener('click', (event: MouseEvent) => {
 });
 
 window.addEventListener('load', async () => {
-	if (location.pathname.startsWith('/login')) {
-		const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]')!;
-		const keepMeSignedInConfig = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
-		keepMeSignedInCheckbox.checked = keepMeSignedInConfig;
-		keepMeSignedInCheckbox.addEventListener('change', async () => {
-			const keepMeSignedIn = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
-			await ipc.callMain('set-config-keepMeSignedIn', keepMeSignedIn);
-		});
+	if (!location.pathname.startsWith('/login')) {
+		return;
 	}
+
+	const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]')!;
+	const isKeepMeSignedInConfig = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
+	keepMeSignedInCheckbox.checked = isKeepMeSignedInConfig;
+	keepMeSignedInCheckbox.addEventListener('change', async () => {
+		const isKeepMeSignedIn = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
+		await ipc.callMain('set-config-keepMeSignedIn', isKeepMeSignedIn);
+	});
 });
 
 // Toggles styles for inactive window
@@ -1206,9 +1183,9 @@ window.addEventListener('focus', () => {
 // so this needs to be done the old-school way
 document.addEventListener('keydown', async event => {
 	// The `!event.altKey` part is a workaround for https://github.com/electron/electron/issues/13895
-	const combineKey = is.macos ? event.metaKey : event.ctrlKey && !event.altKey;
+	const isCombineKey = is.macos ? event.metaKey : event.ctrlKey && !event.altKey;
 
-	if (!combineKey) {
+	if (!isCombineKey) {
 		return;
 	}
 
@@ -1242,12 +1219,14 @@ window.addEventListener('message', async ({data: {type, data}}) => {
 		showNotification(data as NotificationEvent);
 	}
 
-	if (type === 'notification-reply') {
-		await sendReply(data.reply as string);
+	if (type !== 'notification-reply') {
+		return;
+	}
 
-		if (data.previousConversation) {
-			await selectConversation(data.previousConversation as number);
-		}
+	await sendReply(data.reply as string);
+
+	if (data.previousConversation) {
+		await selectConversation(data.previousConversation as number);
 	}
 });
 
@@ -1309,7 +1288,7 @@ function insertMessageText(text: string, inputField: HTMLElement): void {
 			bubbles: true,
 			cancelable: true,
 			data: '_',
-			view: window,
+			view: globalThis as unknown as Window,
 		});
 		inputField.dispatchEvent(event);
 	}
@@ -1324,7 +1303,7 @@ ipc.answerMain('notification-callback', async (data: any) => {
 	if (data.href) {
 		await elementReady(selectors.conversationList, {stopOnDomReady: false});
 		const link = document.querySelector<HTMLElement>(
-			`${selectors.conversationList} [role="row"] [role="link"][href="${data.href}"]`,
+			`${selectors.conversationList} [role="row"] [role="link"][href="${CSS.escape(data.href)}"]`,
 		);
 		link?.click();
 	}

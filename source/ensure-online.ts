@@ -1,5 +1,4 @@
 import {app, dialog} from 'electron';
-import isOnline from 'is-online';
 import pWaitFor from 'p-wait-for';
 
 function showWaitDialog(): void {
@@ -20,10 +19,14 @@ function showWaitDialog(): void {
 }
 
 export default async (): Promise<void> => {
-	if (!(await isOnline())) {
-		const connectivityTimeout = setTimeout(showWaitDialog, 15_000);
+	const {default: isOnline} = await import('is-online');
 
-		await pWaitFor(isOnline, {interval: 1000});
-		clearTimeout(connectivityTimeout);
+	if (await isOnline()) {
+		return;
 	}
+
+	const connectivityTimeout = setTimeout(showWaitDialog, 15_000);
+
+	await pWaitFor(isOnline, {interval: 1000});
+	clearTimeout(connectivityTimeout);
 };

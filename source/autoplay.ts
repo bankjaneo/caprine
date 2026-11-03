@@ -5,8 +5,8 @@ const conversationId = 'conversationWindow';
 const disabledVideoId = 'disabled_autoplay';
 
 export async function toggleVideoAutoplay(): Promise<void> {
-	const autoplayVideos = await ipc.callMain<undefined, boolean>('get-config-autoplayVideos');
-	if (autoplayVideos) {
+	const isAutoplayVideos = await ipc.callMain<undefined, boolean>('get-config-autoplayVideos');
+	if (isAutoplayVideos) {
 		// Stop the observers
 		conversationDivObserver.disconnect();
 		videoObserver.disconnect();
@@ -53,8 +53,8 @@ function disableVideoAutoplay(videos: NodeListOf<HTMLVideoElement>): void {
 			style: {width, height},
 		} = firstParent;
 
-		const style = parentWithBackground.style || window.getComputedStyle(parentWithBackground);
-		const backgroundImageSource = style.backgroundImage.slice(4, -1).replaceAll(/"/, '');
+		const style = parentWithBackground.style || globalThis.getComputedStyle(parentWithBackground);
+		const backgroundImageSource = style.backgroundImage.slice(4, -1).replaceAll('"', '');
 
 		// Create the image to replace the video as a placeholder
 		const image = document.createElement('img');
@@ -139,16 +139,18 @@ const conversationDivObserver = new MutationObserver(_ => {
 	let conversation = document.querySelector(`#${conversationId}`);
 
 	// Fetch it using `querySelector` if no luck with the `conversationId`
-	conversation ||= document.querySelector(selectors.conversationContent);
+	conversation ??= document.querySelector(selectors.conversationContent);
 
 	// If we have a new reference
-	if (conversation && conversationWindow !== conversation) {
-		// Add `conversationId` so we know when we've lost the reference to
-		// the `conversationWindow` and we can restart the video observer
-		conversation.id = conversationId;
-		conversationWindow = conversation;
-		startVideoObserver(conversationWindow);
+	if (!conversation || conversationWindow === conversation) {
+		return;
 	}
+
+	// Add `conversationId` so we know when we've lost the reference to
+	// the `conversationWindow` and we can restart the video observer
+	conversation.id = conversationId;
+	conversationWindow = conversation;
+	startVideoObserver(conversationWindow);
 });
 
 // Reference to mutation observer

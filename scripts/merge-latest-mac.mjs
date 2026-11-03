@@ -12,7 +12,7 @@ const mergeMacManifests = (x64, arm64) => ({
 	...x64,
 	files: [
 		...x64.files,
-		...arm64.files.filter(file => !x64.files.some(existing => existing.url === file.url)),
+		...arm64.files.filter(file => x64.files.every(existing => existing.url !== file.url)),
 	],
 });
 

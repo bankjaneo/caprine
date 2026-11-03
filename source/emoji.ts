@@ -258,7 +258,7 @@ function urlToEmoji(url: string): string {
 	// "An invisible codepoint which specifies that the preceding character
 	// should be displayed with emoji presentation.
 	// Only required if the preceding character defaults to text presentation."
-	return String.fromCodePoint(...codePoints) + '\uFE0F';
+	return String.fromCodePoint(...codePoints) + '\u{FE0F}';
 }
 
 const cachedEmojiMenuIcons = new Map<EmojiStyle, NativeImage>();
@@ -332,8 +332,8 @@ export async function process(url: string): Promise<CallbackResponse> {
 
 	const emojiSetPrefix = 'emoji.php/v9/';
 	const emojiSetIndex = url.indexOf(emojiSetPrefix) + emojiSetPrefix.length;
-	const newURL
-		= url.slice(0, emojiSetIndex) + emojiSetCode + url.slice(emojiSetIndex + 1) + '#replaced';
+	const newURL =
+		url.slice(0, emojiSetIndex) + emojiSetCode + url.slice(emojiSetIndex + 1) + '#replaced';
 
 	return {redirectURL: newURL};
 }

@@ -4,13 +4,13 @@
 		"outDir": "dist-js",
 		"rootDir": "./source",
 		"target": "ES2022",
-		"module": "commonjs",
+		"module": "node16",
 		"esModuleInterop": true,
 		"lib": [
 			"esnext",
 			"dom",
 			"dom.iterable"
 		],
-		"moduleResolution": "node"
+		"moduleResolution": "node16"
 	}
 }
