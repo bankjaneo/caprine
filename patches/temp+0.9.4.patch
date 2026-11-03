@@ -1,0 +1,17 @@
+diff --git a/node_modules/temp/lib/temp.js b/node_modules/temp/lib/temp.js
+index 106e649..98daea4 100644
+--- a/node_modules/temp/lib/temp.js
++++ b/node_modules/temp/lib/temp.js
+@@ -8,6 +8,12 @@ let mkdirp     = require('mkdirp');
+ let osTmpdir   = require('os').tmpdir();
+ 
+ const rimrafSync = rimraf.sync;
++const rimrafAsync = rimraf.rimraf;
++
++// `rimraf` v4+ exports the async function as a property and dropped callbacks.
++rimraf = function(path, options, callback) {
++  rimrafAsync(path, options).then(() => callback(), callback);
++};
+ 
+ //== helpers
+ //
