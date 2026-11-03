@@ -1129,9 +1129,25 @@ function handleLinkClick(event: MouseEvent, target: HTMLElement): boolean {
 }
 
 function isInternalUrl(url: URL): boolean {
-	const isFacebookDomain = url.hostname.endsWith('.facebook.com') || url.hostname === 'www.facebook.com' || url.hostname === 'web.facebook.com';
+	const isFacebookDomain = url.hostname === 'www.facebook.com'
+		|| url.hostname === 'web.facebook.com'
+		|| url.hostname.endsWith('.facebook.com');
 
-	return isFacebookDomain ? (url.pathname.startsWith('/messages') || url.pathname.startsWith('/login') || url.pathname.startsWith('/checkpoint') || url.pathname.startsWith('/two_step_verification') || url.pathname.startsWith('/two_factor') || url.pathname === '/' || url.pathname === '') : false;
+	if (!isFacebookDomain) {
+		return false;
+	}
+
+	const internalPaths = [
+		'/messages',
+		'/login',
+		'/checkpoint',
+		'/two_step_verification',
+		'/two_factor',
+	];
+
+	return internalPaths.some(path => url.pathname.startsWith(path))
+		|| url.pathname === '/'
+		|| url.pathname === '';
 }
 
 document.addEventListener('click', (event: MouseEvent) => {

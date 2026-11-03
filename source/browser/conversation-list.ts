@@ -232,36 +232,47 @@ function generateStringFromNode(element: Element): string | undefined {
 	return cloneElement.textContent ?? undefined;
 }
 
+function findConversationRow(mutation: MutationRecord): HTMLElement | undefined {
+	// Find the conversation row containing this mutation.
+	// For childList mutations the target is the parent element; for others it's the
+	// element/text node itself, so go up one level first.
+	const target = mutation.type === 'childList'
+		? (mutation.target as Element)
+		: (mutation.target.parentElement as Element);
+
+	if (!target) {
+		return undefined;
+	}
+
+	// Walk up to the nearest [role=row] (a single conversation entry in the grid).
+	const row = target.closest<HTMLElement>(selectors.conversationSidebarSelector);
+
+	if (row) {
+		return row;
+	}
+
+	// When a whole row is added (conversation moves to top of list), the target
+	// is the grid container. Check addedNodes for a [role=row] directly.
+	if (mutation.type !== 'childList') {
+		return undefined;
+	}
+
+	for (const node of mutation.addedNodes) {
+		const element = node as Element;
+		if (element.matches?.(selectors.conversationSidebarSelector)) {
+			return element as HTMLElement;
+		}
+	}
+
+	return undefined;
+}
+
 function countUnread(mutationsList: MutationRecord[]): void {
 	const alreadyChecked: string[] = [];
 
 	// Check latest mutation first
 	for (const mutation of mutationsList.reverse()) {
-		// Find the conversation row containing this mutation.
-		// For childList mutations the target is the parent element; for others it's the
-		// element/text node itself, so go up one level first.
-		const target = mutation.type === 'childList'
-			? (mutation.target as Element)
-			: (mutation.target.parentElement as Element);
-
-		if (!target) {
-			continue;
-		}
-
-		// Walk up to the nearest [role=row] (a single conversation entry in the grid).
-		let current = target.closest<HTMLElement>(selectors.conversationSidebarSelector);
-
-		// When a whole row is added (conversation moves to top of list), the target
-		// is the grid container. Check addedNodes for a [role=row] directly.
-		if (!current && mutation.type === 'childList') {
-			for (const node of mutation.addedNodes) {
-				const element = node as Element;
-				if (element.matches?.(selectors.conversationSidebarSelector)) {
-					current = element as HTMLElement;
-					break;
-				}
-			}
-		}
+		const current = findConversationRow(mutation);
 
 		if (!current) {
 			continue;

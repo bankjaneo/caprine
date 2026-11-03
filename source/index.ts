@@ -931,7 +931,10 @@ ipc.answerRenderer(
 				exec(`gst-play-1.0 --no-interactive --quiet "${soundPath}" 2>/dev/null || paplay "${soundPath}" 2>/dev/null || aplay "${soundPath}"`);
 			} else if (is.windows) {
 				// On Windows, use PowerShell with Windows Media Player
-				exec(`powershell -c Add-Type -AssemblyName presentationCore; $player = New-Object system.windows.media.mediaplayer; $player.open('${soundPath}'); $player.Play(); Start-Sleep -s $player.NaturalDuration.TimeSpan.TotalSeconds`);
+				const playerCommand = 'powershell -c Add-Type -AssemblyName presentationCore; '
+					+ `$player = New-Object system.windows.media.mediaplayer; $player.open('${soundPath}'); `
+					+ '$player.Play(); Start-Sleep -s $player.NaturalDuration.TimeSpan.TotalSeconds';
+				exec(playerCommand);
 			}
 		}
 
