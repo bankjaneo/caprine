@@ -200,6 +200,7 @@
 		"electron@43.8.6": true
 	},
 	"overrides": {
+		"@stylistic/stylelint-plugin": "^5.3.1",
 		"glob": "14.0.3",
 		"katex": "^0.18.11",
 		"minimatch": "11.0.4",
