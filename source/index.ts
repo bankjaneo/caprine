@@ -806,25 +806,66 @@ ipc.answerRenderer('navigate-to-chats', () => {
 	mainWindow.webContents.loadURL('https://www.facebook.com/messages/');
 });
 
-ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
-	// The filename comes from page content (the link's `download` attribute or its text),
-	// so reduce it to a bare file name to keep the write inside the downloads directory.
-	filename = (typeof filename === 'string' ? filename : '')
+// Filesystems cap names at 255 bytes, so truncate by code point to never split a
+// multi-byte character and keep the extension intact where it fits.
+const truncateFilename = (filename: string, maxBytes = 255): string => {
+	if (Buffer.byteLength(filename) <= maxBytes) {
+		return filename;
+	}
+
+	const {ext} = path.parse(filename);
+	const extension = Buffer.byteLength(ext) < maxBytes ? ext : '';
+	const stem = filename.slice(0, filename.length - ext.length);
+	let length = Buffer.byteLength(extension);
+	let truncated = '';
+	for (const character of stem) {
+		const characterLength = Buffer.byteLength(character);
+		if (length + characterLength > maxBytes) {
+			break;
+		}
+
+		truncated += character;
+		length += characterLength;
+	}
+
+	return truncated + extension;
+};
+
+// Device names Windows reserves, with or without an extension (`CON`, `nul.txt`).
+const windowsReservedNames = /^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i;
+
+// The filename comes from page content (the link's `download` attribute or its text),
+// so reduce it to a bare file name that is safe to write on every platform.
+const sanitizeFilename = (filename: unknown): string => {
+	let name = (typeof filename === 'string' ? filename : '')
 		.replaceAll('\\', '/')
 		.split('/')
 		.pop()!
 		.replaceAll(/\p{Control}/gu, '')
-		.trim();
-	if (['', '.', '..'].includes(filename)) {
-		filename = 'download';
+		.trim()
+		// A colon would create an alternate data stream on Windows
+		.replaceAll(':', '-');
+
+	if (['', '.', '..'].includes(name)) {
+		name = 'download';
+	} else if (windowsReservedNames.test(name)) {
+		// The device check only looks at the part before the first dot, so `Aux.tar.gz`
+		// has to become `Aux_.tar.gz` rather than `Aux.tar_.gz`
+		name = name.replace(/^(?<stem>[^.]+)/, '$<stem>_');
 	}
+
+	return truncateFilename(name);
+};
+
+ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
+	filename = sanitizeFilename(filename);
 
 	const downloadsDirectory = app.getPath('downloads');
 	let savePath = path.join(downloadsDirectory, filename);
 	let counter = 1;
 	const {name, ext} = path.parse(filename);
 	while (existsSync(savePath)) {
-		savePath = path.join(downloadsDirectory, `${name} (${counter})${ext}`);
+		savePath = path.join(downloadsDirectory, truncateFilename(`${name} (${counter})${ext}`));
 		counter++;
 	}
 
