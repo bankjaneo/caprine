@@ -11,6 +11,7 @@
 			"dom",
 			"dom.iterable"
 		],
-		"moduleResolution": "node16"
+		"moduleResolution": "node16",
+		"moduleDetection": "auto"
 	}
 }
