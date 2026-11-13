@@ -807,7 +807,18 @@ ipc.answerRenderer('navigate-to-chats', () => {
 });
 
 ipc.answerRenderer('save-blob-file', async ({data, filename}: {data: ArrayBuffer; filename: string}) => {
-	filename ||= 'download';
+	// The filename comes from page content (the link's `download` attribute or its text),
+	// so reduce it to a bare file name to keep the write inside the downloads directory.
+	filename = (typeof filename === 'string' ? filename : '')
+		.replaceAll('\\', '/')
+		.split('/')
+		.pop()!
+		.replaceAll(/\p{Control}/gu, '')
+		.trim();
+	if (['', '.', '..'].includes(filename)) {
+		filename = 'download';
+	}
+
 	const downloadsDirectory = app.getPath('downloads');
 	let savePath = path.join(downloadsDirectory, filename);
 	let counter = 1;
