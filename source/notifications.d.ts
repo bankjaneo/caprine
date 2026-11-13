@@ -6,4 +6,5 @@ type NotificationCallback = {
 type NotificationReplyCallback = NotificationCallback & {
 	previousConversation: number;
 	reply: string;
+	href?: string;
 };

@@ -21,7 +21,7 @@
 		}
 
 		if (type === 'notification-reply-callback') {
-			const {callbackName, id, previousConversation, reply}: NotificationReplyCallback = data;
+			const {callbackName, id}: NotificationReplyCallback = data;
 			const notification = notifications.get(id);
 
 			if (!notification) {
@@ -33,7 +33,6 @@
 			}
 
 			notifications.delete(id);
-			window.postMessage({type: 'notification-reply', data: {previousConversation, reply}}, '*');
 		}
 	});
 
@@ -61,9 +60,11 @@
 					{
 						type: 'notification',
 						data: {
+							// Messenger puts its own `id` in the options, so ours has to come after
+							// the spread or it gets clobbered and the callback lookup misses
+							...options,
 							title,
 							id: this._id,
-							...options,
 							body,
 						},
 					},

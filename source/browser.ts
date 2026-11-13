@@ -1234,16 +1234,6 @@ window.addEventListener('message', async ({data: {type, data}}) => {
 	if (type === 'notification') {
 		showNotification(data as NotificationEvent);
 	}
-
-	if (type !== 'notification-reply') {
-		return;
-	}
-
-	await sendReply(data.reply as string);
-
-	if (data.previousConversation) {
-		await selectConversation(data.previousConversation as number);
-	}
 });
 
 function showNotification({id, href, title, body, icon, silent}: NotificationEvent): void {
@@ -1271,11 +1261,81 @@ function showNotification({id, href, title, body, icon, silent}: NotificationEve
 	});
 }
 
+const poll = async (predicate: () => boolean, timeout: number): Promise<boolean> => {
+	const deadline = Date.now() + timeout;
+	const retry = async (): Promise<boolean> => {
+		if (predicate()) {
+			return true;
+		}
+
+		if (Date.now() > deadline) {
+			return false;
+		}
+
+		await new Promise(resolve => {
+			setTimeout(resolve, 50);
+		});
+		return retry();
+	};
+
+	return retry();
+};
+
+async function openConversation(href: string): Promise<void> {
+	await elementReady(selectors.conversationList, {stopOnDomReady: false});
+	const link = document.querySelector<HTMLElement>(
+		`${selectors.conversationList} [role="row"] [role="link"][href="${CSS.escape(href)}"]`,
+	);
+	link?.click();
+}
+
+async function waitForConversation(href: string | undefined): Promise<void> {
+	if (!href) {
+		return;
+	}
+
+	// Messenger navigates from its own `onclick`, but only when the notification went
+	// through the injected script, so fall back to opening the conversation ourselves
+	const stripTrailingSlash = (value: string): string => (value.endsWith('/') ? value.slice(0, -1) : value);
+	const target = stripTrailingSlash(new URL(href, location.href).pathname);
+	const onTarget = (): boolean => stripTrailingSlash(location.pathname) === target;
+	const composerBefore = document.querySelector<HTMLElement>('[contenteditable="true"]');
+
+	if (!onTarget()) {
+		await poll(onTarget, 600);
+
+		if (!onTarget()) {
+			await openConversation(href);
+			await poll(onTarget, 2000);
+		}
+	}
+
+	// The URL updates before the thread view does, sometimes synchronously, so this has
+	// to wait for the composer even when the URL already matches: text inserted into the
+	// outgoing composer is dropped when the new conversation renders
+	await poll(() => {
+		const composer = document.querySelector<HTMLElement>('[contenteditable="true"]');
+		return Boolean(composer) && composer !== composerBefore;
+	}, 1000);
+}
+
+// The empty composer shows a "Send a 🤓" like button, and only swaps in the send
+// control once the editor has processed the insertion
+async function waitForSendButton(): Promise<HTMLElement | undefined> {
+	const find = (): HTMLElement | undefined => document.querySelector<HTMLElement>('[role="button"][aria-label*="send" i]') ?? undefined;
+	await poll(() => find()?.getAttribute('aria-label') === 'Press enter to send', 1000);
+	return find();
+}
+
 async function sendReply(message: string): Promise<void> {
 	const inputField = document.querySelector<HTMLElement>('[contenteditable="true"]');
 	if (!inputField) {
 		return;
 	}
+
+	// The editor only fires the input events that update its state while the document has
+	// focus, so text inserted into a background window is dropped on the next render
+	await poll(() => document.hasFocus(), 1000);
 
 	const previousMessage = inputField.textContent;
 
@@ -1283,7 +1343,7 @@ async function sendReply(message: string): Promise<void> {
 	inputField.focus();
 	insertMessageText(message, inputField);
 
-	const sendButton = await elementReady<HTMLElement>('._30yy._38lh', {stopOnDomReady: false});
+	const sendButton = await waitForSendButton();
 	if (!sendButton) {
 		console.error('Could not find send button');
 		return;
@@ -1317,16 +1377,27 @@ ipc.answerMain('notification-callback', async (data: any) => {
 	window.postMessage({type: 'notification-callback', data}, '*');
 
 	if (data.href) {
-		await elementReady(selectors.conversationList, {stopOnDomReady: false});
-		const link = document.querySelector<HTMLElement>(
-			`${selectors.conversationList} [role="row"] [role="link"][href="${CSS.escape(data.href)}"]`,
-		);
-		link?.click();
+		await openConversation(data.href as string);
 	}
 });
 
 ipc.answerMain('notification-reply-callback', async (data: any) => {
 	const previousConversation = selectedConversationIndex();
-	data.previousConversation = previousConversation;
-	window.postMessage({type: 'notification-reply-callback', data}, '*');
+
+	// Still hand the callback to the page so Messenger's own `onclick` runs where the
+	// notification did come from the injected script
+	window.postMessage(
+		{
+			type: 'notification-reply-callback',
+			data,
+		},
+		'*',
+	);
+
+	await waitForConversation(data.href as string | undefined);
+	await sendReply(data.reply as string);
+
+	if (previousConversation >= 0) {
+		await selectConversation(previousConversation);
+	}
 });

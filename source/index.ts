@@ -952,6 +952,14 @@ ipc.answerRenderer(
 		});
 
 		notification.on('reply', (_event, reply: string) => {
+			// The editor only registers typed text while the window has focus, and a reply
+			// can arrive with the app in the background
+			if (is.macos) {
+				app.focus({steal: true});
+			}
+
+			showAndFocusWindow(mainWindow);
+
 			sendBackgroundAction('notification-reply-callback', {
 				callbackName: 'onclick',
 				id,
