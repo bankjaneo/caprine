@@ -116,9 +116,11 @@ jobs:
       - name: Build Pacman packages (x86_64 and aarch64)
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          # Build pacman packages in Arch Linux container
-          docker run --rm -v "${{ github.workspace }}":/caprine archlinux:base-devel bash -c '
-            pacman -Sy --noconfirm base-devel nodejs npm git rsync sudo
+          # Build pacman packages in Arch Linux container. The image is a stale
+          # rolling release, so a full upgrade (-Syu) is required: -Sy alone
+          # fails on dependency breaks like openssl 4 vs libcrypto.so=3.
+          docker run --rm -v "${{ github.workspace }}":/caprine archlinux:base-devel bash -euo pipefail -c '
+            pacman -Syu --noconfirm base-devel nodejs npm git rsync sudo
             useradd -m -s /bin/bash builder
             echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
             chown -R builder:builder /caprine
