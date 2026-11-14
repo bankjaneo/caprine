@@ -692,15 +692,19 @@ Press Command/Ctrl+R in Caprine to see your changes.
 	const helpSubmenu: MenuItemConstructorOptions[] = [
 		openUrlMenuItem({
 			label: 'Website',
-			url: 'https://github.com/sindresorhus/caprine',
+			url: 'https://github.com/bankjaneo/caprine',
+		}),
+		openUrlMenuItem({
+			label: 'Release Notes…',
+			url: 'https://github.com/bankjaneo/caprine/releases/latest',
 		}),
 		openUrlMenuItem({
 			label: 'Source Code',
-			url: 'https://github.com/sindresorhus/caprine',
+			url: 'https://github.com/bankjaneo/caprine',
 		}),
 		openUrlMenuItem({
 			label: 'Donate…',
-			url: 'https://github.com/sindresorhus/caprine?sponsor=1',
+			url: 'https://www.buymeacoffee.com/bankja',
 		}),
 		{
 			label: 'Report an Issue…',
@@ -714,7 +718,7 @@ Press Command/Ctrl+R in Caprine to see your changes.
 ${debugInfo()}`;
 
 				openNewGitHubIssue({
-					user: 'sindresorhus',
+					user: 'bankjaneo',
 					repo: 'caprine',
 					body,
 				});
@@ -731,7 +735,7 @@ ${debugInfo()}`;
 				icon: caprineIconPath,
 				copyright: 'Created by Sindre Sorhus',
 				text: 'Maintainers:\nDušan Simić\nLefteris Garyfalakis\nMichael Quevillon\nNikolas Spiridakis',
-				website: 'https://github.com/sindresorhus/caprine',
+				website: 'https://github.com/bankjaneo/caprine',
 			}),
 		);
 	}
