@@ -82,6 +82,7 @@
 		}
 	},
 	"np": {
+		"branch": "facebook-migrate",
 		"publish": false,
 		"releaseDraft": false
 	},
