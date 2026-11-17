@@ -345,6 +345,15 @@ function createMainWindow(): BrowserWindow {
 		}
 	}
 
+	// Never open taller or wider than the display's work area (a 1366x768
+	// screen leaves about 728 px under the taskbar).
+	const {workAreaSize} = electronScreen.getDisplayNearestPoint({
+		x: lastWindowState.x ?? 0,
+		y: lastWindowState.y ?? 0,
+	});
+	windowWidth = Math.min(windowWidth, workAreaSize.width);
+	windowHeight = Math.min(windowHeight, workAreaSize.height);
+
 	const win = new BrowserWindow({
 		title: app.name,
 		show: false,

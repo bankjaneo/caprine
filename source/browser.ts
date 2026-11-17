@@ -1216,12 +1216,17 @@ window.addEventListener('load', async () => {
 		return;
 	}
 
-	const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]')!;
+	const keepMeSignedInCheckbox = document.querySelector<HTMLInputElement>('[id^="u_0_0"]');
+	if (!keepMeSignedInCheckbox) {
+		return;
+	}
+
 	const isKeepMeSignedInConfig = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
 	keepMeSignedInCheckbox.checked = isKeepMeSignedInConfig;
 	keepMeSignedInCheckbox.addEventListener('change', async () => {
-		const isKeepMeSignedIn = await ipc.callMain<undefined, boolean>('get-config-keepMeSignedIn');
-		await ipc.callMain('set-config-keepMeSignedIn', isKeepMeSignedIn);
+		// Save what the box now says. Reading the config back and writing the
+		// same value meant the setting could never change.
+		await ipc.callMain('set-config-keepMeSignedIn', keepMeSignedInCheckbox.checked);
 	});
 });
 
