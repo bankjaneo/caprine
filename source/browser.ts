@@ -1,5 +1,5 @@
 import process from 'node:process';
-import {webFrame} from 'electron';
+import {webFrame, contextBridge} from 'electron';
 import {ipcRenderer as ipc} from 'electron-better-ipc';
 import {is} from 'electron-util';
 import elementReady from 'element-ready';
@@ -13,6 +13,30 @@ type ThemeSource = typeof nativeTheme.themeSource;
 
 // Inject scrollbar-hiding CSS immediately in preload to prevent white flash
 webFrame.insertCSS('html::-webkit-scrollbar { display: none !important; }');
+
+// Electron cannot complete a passkey (WebAuthn) sign-in, so Facebook's
+// "Use face scan, fingerprint or screen lock" step spins forever. Hide WebAuthn
+// from the page before its scripts run, so "Try another way" leads to a method
+// that works here (approve from another device, or a code).
+contextBridge.executeInMainWorld({
+	// Must stay an arrow function: Electron serializes `func` with toString(), and
+	// method shorthand (`func() {}`) is not a valid expression on its own, which
+	// throws "Unexpected token '{'" and stops this whole preload from loading.
+	// eslint-disable-next-line object-shorthand
+	func: () => {
+		try {
+			Object.defineProperty(globalThis, 'PublicKeyCredential', {value: undefined, configurable: true});
+			const unsupported = async () => {
+				throw new DOMException('Passkeys are not supported in this app', 'NotSupportedError');
+			};
+
+			Object.defineProperties(navigator.credentials, {
+				get: {value: unsupported, configurable: true},
+				create: {value: unsupported, configurable: true},
+			});
+		} catch {}
+	},
+});
 
 async function withMenu(
 	menuButtonElement: HTMLElement,
