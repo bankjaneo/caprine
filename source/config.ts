@@ -99,8 +99,8 @@ const schema: Store.Schema<StoreType> = {
 		default: {
 			x: undefined,
 			y: undefined,
-			width: 800,
-			height: 600,
+			width: 1000,
+			height: 760,
 			isMaximized: false,
 			scaleFactor: 1,
 		},
