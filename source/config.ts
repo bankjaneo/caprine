@@ -284,7 +284,24 @@ function migrate(store: Store<StoreType>): void {
 	updateThemeSetting(store);
 }
 
-const store = new Store<StoreType>({schema});
+const store = new Store<StoreType>({
+	schema,
+	migrations: {
+		// 2.63.0 raised the default window from 800x600 to 1000x720, but
+		// `lastWindowState` is persisted, so the new default only reached fresh
+		// profiles. A saved 800x600 is the old default nobody resized: move it
+		// to the new one. A migration runs once, so a window resized back to
+		// 800x600 later stays that way.
+		'2.63.1'(store) {
+			const {width, height} = store.get('lastWindowState');
+
+			if (width === 800 && height === 600) {
+				store.set('lastWindowState.width', 1000);
+				store.set('lastWindowState.height', 720);
+			}
+		},
+	},
+});
 migrate(store);
 
 export default store;
