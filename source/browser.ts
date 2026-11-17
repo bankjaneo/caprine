@@ -18,25 +18,39 @@ webFrame.insertCSS('html::-webkit-scrollbar { display: none !important; }');
 // "Use face scan, fingerprint or screen lock" step spins forever. Hide WebAuthn
 // from the page before its scripts run, so "Try another way" leads to a method
 // that works here (approve from another device, or a code).
-contextBridge.executeInMainWorld({
-	// Must stay an arrow function: Electron serializes `func` with toString(), and
-	// method shorthand (`func() {}`) is not a valid expression on its own, which
-	// throws "Unexpected token '{'" and stops this whole preload from loading.
-	// eslint-disable-next-line object-shorthand
-	func: () => {
-		try {
-			Object.defineProperty(globalThis, 'PublicKeyCredential', {value: undefined, configurable: true});
-			const unsupported = async () => {
-				throw new DOMException('Passkeys are not supported in this app', 'NotSupportedError');
-			};
+// contextBridge.executeInMainWorld is Electron 35+ (and still experimental). The x64
+// mac build runs Electron 29, where calling it would throw here and stop the rest of
+// this preload, so it is only used where it exists; on 29 the passkey step keeps
+// spinning as before.
+const {executeInMainWorld} = contextBridge as typeof contextBridge & {
+	executeInMainWorld?: (executionScript: {func: () => void}) => unknown;
+};
 
-			Object.defineProperties(navigator.credentials, {
-				get: {value: unsupported, configurable: true},
-				create: {value: unsupported, configurable: true},
-			});
-		} catch {}
-	},
-});
+if (executeInMainWorld) {
+	executeInMainWorld({
+		// Must stay an arrow function: Electron serializes `func` with toString(), and
+		// method shorthand (`func() {}`) is not a valid expression on its own, which
+		// throws "Unexpected token '{'" and stops this whole preload from loading.
+		// eslint-disable-next-line object-shorthand
+		func: () => {
+			try {
+				// Delete rather than define as undefined, so `'PublicKeyCredential' in window`
+				// is false too, not only `typeof`.
+				Reflect.deleteProperty(globalThis, 'PublicKeyCredential');
+				const unsupported = async () => {
+					throw new DOMException('Passkeys are not supported in this app', 'NotSupportedError');
+				};
+
+				Object.defineProperties(navigator.credentials, {
+					get: {value: unsupported, configurable: true},
+					create: {value: unsupported, configurable: true},
+				});
+			} catch (error) {
+				console.warn('Caprine: could not hide WebAuthn from the page', error);
+			}
+		},
+	});
+}
 
 async function withMenu(
 	menuButtonElement: HTMLElement,

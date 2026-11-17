@@ -100,7 +100,7 @@ const schema: Store.Schema<StoreType> = {
 			x: undefined,
 			y: undefined,
 			width: 1000,
-			height: 760,
+			height: 720,
 			isMaximized: false,
 			scaleFactor: 1,
 		},
