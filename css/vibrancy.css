@@ -1,9 +1,9 @@
 /* -- BLOCK START: sidebar-only vibrancy -- */
 
 html.sidebar-vibrancy body,
-html.sidebar-vibrancy ._4sp8,
+html.sidebar-vibrancy [role='navigation']:has([role='grid']),
 html.sidebar-vibrancy.dark-mode body,
-html.sidebar-vibrancy.dark-mode ._4sp8 {
+html.sidebar-vibrancy.dark-mode [role='navigation']:has([role='grid']) {
 	background: transparent !important;
 }
 
@@ -15,67 +15,12 @@ html.sidebar-vibrancy.dark-mode ._3v_o {
 	background-color: var(--container-dark-color);
 }
 
-/* Message placeholder text color */
-html.sidebar-vibrancy ._kmc ._1p1t {
-	color: #999 !important;
-	-webkit-text-fill-color: #999 !important;
-}
-
-/* Contact list: header above */
-html.sidebar-vibrancy.dark-mode ._36ic {
-	background: transparent !important;
-}
-
 /* Contact list: search input */
-html.sidebar-vibrancy ._5iwm ._58al {
+html.sidebar-vibrancy [role='navigation']:has([role='grid']) label:has(input[type='search']) {
 	background-color: rgb(246 247 249 / 50%) !important;
 }
-html.sidebar-vibrancy.dark-mode ._5iwm ._58al {
+html.sidebar-vibrancy.dark-mode [role='navigation']:has([role='grid']) label:has(input[type='search']) {
 	background: var(--base-five) !important;
-}
-
-/* Chat title bar */
-html.sidebar-vibrancy ._673w {
-	background-color: #fff !important;
-}
-
-html.sidebar-vibrancy.dark-mode ._673w {
-	background-color: var(--container-dark-color) !important;
-	border-bottom: 1px solid var(--base-five) !important;
-}
-
-/* Share previews: title and subtitle */
-html.sidebar-vibrancy .__6k,
-html.sidebar-vibrancy .__6l {
-	background-color: transparent !important;
-}
-
-/* Message container + right sidebar */
-html.sidebar-vibrancy ._4_j4,
-html.sidebar-vibrancy ._4_j5 {
-	background: #fff !important;
-}
-html.sidebar-vibrancy.dark-mode ._4_j4,
-html.sidebar-vibrancy.dark-mode ._4_j5 {
-	background: var(--container-dark-color) !important;
-}
-
-/* Message list: header above */
-html.sidebar-vibrancy.dark-mode ._5742 {
-	background: transparent !important;
-}
-
-/* New conversation name input field */
-html.sidebar-vibrancy ._2y8y {
-	background: #fff !important;
-}
-html.sidebar-vibrancy.dark-mode ._2y8y {
-	background: var(--container-dark-color) !important;
-}
-
-/* Message text bar */
-html.sidebar-vibrancy.dark-mode ._5irm._7mkm {
-	background: var(--container-dark-color);
 }
 
 /* -- BLOCK END: sidebar-only vibrancy -- */
@@ -83,145 +28,31 @@ html.sidebar-vibrancy.dark-mode ._5irm._7mkm {
 /* -- BLOCK START: full-window vibrancy -- */
 
 html.full-vibrancy body,
-html.full-vibrancy ._4sp8 {
+html.full-vibrancy [role='navigation']:has([role='grid']),
+html.full-vibrancy.dark-mode body,
+html.full-vibrancy.dark-mode [role='navigation']:has([role='grid']) {
 	background: transparent !important;
 }
-
 
 html.full-vibrancy ._5hy2 ._43dh, /* Login button */
 html.full-vibrancy ._3-mr ._3-mv /* Verification "Continue" button */ {
 	background-color: transparent !important;
 }
 
-/* Message placeholder text color */
-html.full-vibrancy ._kmc ._1p1t {
-	color: #999 !important;
-	-webkit-text-fill-color: #999 !important;
-}
-
-/* Messages list: start conversation with a chat bot */
-html.full-vibrancy ._2xh0 ._3zc8 {
-	background-color: transparent;
-}
-
-/* Messages list: start conversation with a chat bot buttons */
-html.full-vibrancy ._2xh0 ._2xh4 {
-	background-color: transparent;
-}
-
 /* Contact list: search input */
-html.full-vibrancy ._5iwm ._58al {
+html.full-vibrancy [role='navigation']:has([role='grid']) label:has(input[type='search']) {
 	background-color: rgb(246 247 249 / 50%) !important;
 }
-html.full-vibrancy.dark-mode ._5iwm ._58al {
+html.full-vibrancy.dark-mode [role='navigation']:has([role='grid']) label:has(input[type='search']) {
 	background: var(--base-five) !important;
 }
 
-/* Chat title bar */
-html.full-vibrancy ._673w,
-html.full-vibrancy.dark-mode ._673w {
-	background-color: transparent !important;
-}
-
-/* Share previews: title and subtitle */
-html.full-vibrancy .__6k,
-html.full-vibrancy .__6l {
-	background-color: transparent !important;
-}
-
-/* Contact list: person container */
-html.full-vibrancy ._1qt4 {
-	border-top: solid 1px rgb(0 0 0 / 6%);
-}
-
-/* Main content */
-html.full-vibrancy.dark-mode ._1q5- {
-	background: transparent !important;
-}
-
-/* Message list: header above */
-html.full-vibrancy.dark-mode ._5742 {
-	background: transparent !important;
-}
-
-/* Contact list: header above */
-html.full-vibrancy.dark-mode ._36ic {
-	background: transparent !important;
-}
-
-/* Message container + right sidebar */
-html.full-vibrancy ._4_j4,
-html.full-vibrancy ._4_j5,
-html.full-vibrancy.dark-mode ._4_j4,
-html.full-vibrancy.dark-mode ._4_j5 {
-	background: transparent !important;
-}
-
-/* New conversation name input field */
-html.full-vibrancy ._2y8y,
-html.full-vibrancy.dark-mode ._2y8y {
-	background: transparent !important;
-}
-
 /* Message composer buttons */
-html.full-vibrancy ._39bj {
+html.full-vibrancy [role='main'] [role='button'] svg {
 	filter: brightness(0.8);
 }
-html.full-vibrancy.dark-model ._39bj {
+html.full-vibrancy.dark-mode [role='main'] [role='button'] svg {
 	filter: brightness(1);
 }
 
-/* Deleted message */
-html.full-vibrancy ._7301._hh7 {
-	background-color: #fff;
-	border-color: transparent !important;
-}
-html.full-vibrancy.dark-mode ._7301._hh7 {
-	background-color: var(--container-color);
-}
-
-/* Message list: link preview */
-html.full-vibrancy ._5i_d {
-	background-color: #fff;
-	border-color: transparent !important;
-}
-html.full-vibrancy.dark-mode ._5i_d {
-	background-color: var(--container-color);
-}
-
-/* Message composer: attached files */
-html.full-vibrancy ._2zl5 {
-	background-color: #fff;
-	border-color: transparent;
-}
-html.full-vibrancy.dark-mode ._2zl5 {
-	background-color: var(--container-color);
-}
-
-/* Reply tag icon */
-html.full-vibrancy ._6e38 {
-	filter: brightness(0.66);
-}
-
-/* Message composer: link preview */
-html.full-vibrancy .chatAttachmentShelf,
-html.full-vibrancy .fbNubFlyoutAttachments,
-html.full-vibrancy.dark-mode .chatAttachmentShelf,
-html.full-vibrancy.dark-mode .fbNubFlyoutAttachments {
-	background: transparent !important;
-}
-html.full-vibrancy .chatAttachmentShelf,
-html.full-vibrancy.dark-mode .chatAttachmentShelf {
-	border-top-color: rgb(0 0 0 / 10%);
-}
-
-/* Message text bar */
-html.full-vibrancy ._5irm._7mkm {
-	background: transparent;
-}
-
-/* Additional "plus" bar */
-html.full-vibrancy ._7mkk._7t1o._7t0j {
-	display: none;
-}
 /* -- BLOCK END: full-window vibrancy -- */

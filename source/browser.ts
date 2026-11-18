@@ -164,7 +164,7 @@ async function openSearchInConversation() {
 
 	// Expand the right panel if it's collapsed
 	if (!isPanelExpanded) {
-		document.querySelector<HTMLElement>(selectors.rightSidebarMenu)?.click();
+		chatInfoButton?.click();
 		// Wait for panel to expand and search button to appear
 		await new Promise(resolve => {
 			setTimeout(resolve, 300);
@@ -311,8 +311,8 @@ ipc.answerMain('toggle-message-buttons', async () => {
 });
 
 async function openSettingsMenuAndClickItem(
-	identifier: string | {svgPathPrefix: string},
-	options?: {useExactMatch?: boolean; waitForSelector?: string},
+	identifier: {svgPathPrefix: string},
+	options?: {waitForSelector?: string},
 ): Promise<void> {
 	// Click the Settings button
 	const settingsButton = document.querySelector<HTMLElement>(selectors.userMenuNewSidebar);
@@ -325,21 +325,13 @@ async function openSettingsMenuAndClickItem(
 	// Wait for the menu to appear
 	await elementReady(selectors.conversationMenuSelectorNewDesign, {stopOnDomReady: false});
 
-	// Find and click the menu item by text (English) or SVG icon path (language-independent)
+	// Find and click the menu item by SVG icon path (language-independent)
 	const menuItems = document.querySelectorAll<HTMLElement>(
 		`${selectors.conversationMenuSelectorNewDesign} [role="menuitem"]`,
 	);
 
 	for (const item of menuItems) {
-		let isMatches: boolean;
-		if (typeof identifier === 'string') {
-			const text = item.textContent?.trim();
-			isMatches = options?.useExactMatch ? text === identifier : text?.includes(identifier);
-		} else {
-			isMatches = Boolean(item.querySelector(`path[d^="${CSS.escape(identifier.svgPathPrefix)}"]`));
-		}
-
-		if (isMatches) {
+		if (item.querySelector(`path[d^="${CSS.escape(identifier.svgPathPrefix)}"]`)) {
 			item.click();
 			break;
 		}
@@ -451,11 +443,24 @@ async function observeTheme(): Promise<void> {
 		const nodeRecords = records.filter(record => record.addedNodes.length > 0);
 		for (const nodeRecord of nodeRecords) {
 			for (const newNode of nodeRecord.addedNodes) {
-				const {classList} = (newNode as HTMLElement);
+				if (newNode.nodeType !== Node.ELEMENT_NODE) {
+					continue;
+				}
+
+				const element = newNode as HTMLElement;
+				const {classList} = element;
 				const isLight = classList.contains('light-mode') || classList.contains('__fb-light-mode');
 				if (nativeTheme.shouldUseDarkColors === isLight) {
-					setThemeElement(newNode as HTMLElement);
+					setThemeElement(element);
 				}
+			}
+		}
+
+		// Menus are re-created in a portal every time they open, so they cannot
+		// be observed directly. Catch new ones as they are added.
+		if (nodeRecords.length > 0) {
+			for (const menu of document.querySelectorAll<HTMLElement>('[role=menu].light-mode, [role=menu].__fb-light-mode')) {
+				setThemeElement(menu);
 			}
 		}
 	});
@@ -463,10 +468,7 @@ async function observeTheme(): Promise<void> {
 	/*
 	Observe only elements where new nodes may need dark mode
 	*/
-	const menuElements = await elementReady('.j83agx80.cbu4d94t.l9j0dhe7.jgljxmt5.be9z9djy > div:nth-of-type(2) > div', {stopOnDomReady: false});
-	if (menuElements) {
-		observerNew.observe(menuElements, {childList: true});
-	}
+	observerNew.observe(document.documentElement, {childList: true, subtree: true});
 
 	const modalElements = await elementReady(selectors.preferencesSelector, {stopOnDomReady: false});
 	if (modalElements) {
@@ -735,7 +737,7 @@ function getConversationMenuItems(): HTMLElement[] {
 Finds the Mute menu item: SVG path first, positional fallback (always index 1).
 */
 function findMuteMenuItem(): HTMLElement | undefined {
-	return findMenuItemByIconPath('M109.362 211') ?? getConversationMenuItems()[1] ?? undefined;
+	return findMenuItemByIconPath('M6.535 16.5') ?? getConversationMenuItems()[1] ?? undefined;
 }
 
 /**
@@ -748,7 +750,7 @@ function findDeleteMenuItem(): HTMLElement | undefined {
 	}
 
 	// Fallback: Delete is always right before Report (warning-triangle icon)
-	const reportItem = findMenuItemByIconPath('M112.423 209.728');
+	const reportItem = findMenuItemByIconPath('M7.188 2.606');
 	return (reportItem?.previousElementSibling as HTMLElement | undefined) ?? undefined;
 }
 
@@ -806,11 +808,8 @@ function isPreferencesOpen(): boolean {
 
 async function closePreferences(): Promise<void> {
 	// Wait for the preferences window to be closed, then remove the class from the document
-	const preferencesOverlayObserver = new MutationObserver(records => {
-		const removedRecords = records.filter(({removedNodes}) => removedNodes.length > 0 && (removedNodes[0] as HTMLElement).tagName === 'DIV');
-
-		// In case there is a div removed, hide utility class and stop observing
-		if (removedRecords.length === 0) {
+	const preferencesOverlayObserver = new MutationObserver(() => {
+		if (document.querySelector(selectors.preferencesSelector)) {
 			return;
 		}
 
@@ -820,10 +819,7 @@ async function closePreferences(): Promise<void> {
 
 	const preferencesOverlay = document.querySelector(selectors.preferencesSelector)!;
 
-	// Get the parent of preferences, that's not getting deleted
-	const preferencesParent = preferencesOverlay.closest('div:not([class])')!;
-
-	preferencesOverlayObserver.observe(preferencesParent, {childList: true});
+	preferencesOverlayObserver.observe(document.documentElement, {childList: true, subtree: true});
 
 	const closeButton = preferencesOverlay.querySelector(selectors.closePreferencesButton)!;
 	(closeButton as HTMLElement)?.click();
@@ -836,29 +832,30 @@ function insertionListener(event: AnimationEvent): void {
 }
 
 async function observeAutoscroll(): Promise<void> {
-	const mainElement = await elementReady('._4sp8', {stopOnDomReady: false});
+	const mainElement = await elementReady('[role=main]', {stopOnDomReady: false});
 	if (!mainElement) {
 		return;
 	}
 
-	const scrollToBottom = (): void => {
-		const scrollableElement: HTMLElement | undefined = document.querySelector('[role=presentation] .scrollable') ?? undefined;
-		if (scrollableElement) {
-			scrollableElement.scroll({
-				top: Number.MAX_SAFE_INTEGER,
-				behavior: 'smooth',
-			});
-		}
+	const scrollToBottom = (scrollableElement: HTMLElement): void => {
+		scrollableElement.scroll({
+			top: Number.MAX_SAFE_INTEGER,
+			behavior: 'smooth',
+		});
 	};
 
 	const hookMessageObserver = async (): Promise<void> => {
-		const chatElement = await elementReady(
-			'[role=presentation] .scrollable [role = region] > div[id ^= "js_"]', {stopOnDomReady: false},
-		);
+		const log = await elementReady<HTMLElement>('[role=log]', {stopOnDomReady: false});
 
-		if (chatElement) {
+		if (log) {
+			// The log itself is not scrollable; its first scrollable descendant is.
+			const chatElement = [...log.querySelectorAll<HTMLElement>('*')].find(element => {
+				const {overflowY} = getComputedStyle(element);
+				return overflowY === 'auto' || overflowY === 'scroll';
+			}) ?? log;
+
 			// Scroll to the bottom when opening different conversation
-			scrollToBottom();
+			scrollToBottom(chatElement);
 
 			const messageObserver = new MutationObserver((record: MutationRecord[]) => {
 				const newMessages: MutationRecord[] = record.filter(record =>
@@ -866,13 +863,13 @@ async function observeAutoscroll(): Promise<void> {
 					record.addedNodes.length > 0
 					// ... of a div       (skip the "seen" status change)
 					&& (record.addedNodes[0] as HTMLElement).tagName === 'DIV'
-					// ... on the last child       (skip previous messages added when scrolling up)
-					&& chatElement.lastChild!.contains(record.target),
+					// ... at the bottom       (skip previous messages added when scrolling up)
+					&& (record.target === chatElement || chatElement.lastElementChild?.contains(record.target)),
 				);
 
 				if (newMessages.length > 0) {
 					// Scroll to the bottom when there are new messages
-					scrollToBottom();
+					scrollToBottom(chatElement);
 				}
 			});
 
@@ -1106,7 +1103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Handle title bar double-click.
 globalThis.addEventListener('dblclick', (event: Event) => {
 	const target = event.target as HTMLElement;
-	const titleBar = target.closest('._36ic._5l-3,._5742,._6-xk,._673w');
+	const titleBar = target.closest('#caprine-drag-bar, ._36ic._5l-3, ._5742, ._6-xk, ._673w');
 
 	if (!titleBar) {
 		return;
@@ -1376,11 +1373,20 @@ async function waitForConversation(href: string | undefined): Promise<void> {
 	}, 1000);
 }
 
-// The empty composer shows a "Send a 🤓" like button, and only swaps in the send
-// control once the editor has processed the insertion
+// The empty composer shows an emoji-like button, and only swaps in the send
+// control once the editor has processed the insertion. The label itself is
+// localized, so compare it against the label from before the insertion.
 async function waitForSendButton(): Promise<HTMLElement | undefined> {
-	const find = (): HTMLElement | undefined => document.querySelector<HTMLElement>('[role="button"][aria-label*="send" i]') ?? undefined;
-	await poll(() => find()?.getAttribute('aria-label') === 'Press enter to send', 1000);
+	const find = (): HTMLElement | undefined => {
+		const composer = document.querySelector<HTMLElement>('[role="textbox"][contenteditable="true"]')?.closest('[role="region"]');
+		return composer ? [...composer.querySelectorAll<HTMLElement>('[role="button"]')].at(-1) : undefined;
+	};
+
+	const initialLabel = find()?.getAttribute('aria-label');
+	await poll(() => {
+		const button = find();
+		return button !== undefined && button.getAttribute('aria-label') !== initialLabel;
+	}, 1000);
 	return find();
 }
 

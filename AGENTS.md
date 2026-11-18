@@ -113,6 +113,15 @@ When investigating renderer/DOM bugs (Facebook page layout, injected CSS/JS beha
 - Use `!important` liberally to override Facebook's inline styles
 - Organize CSS by feature (browser.css, dark-mode.css, etc.)
 
+### Selector Conventions
+
+Facebook selectors must be language-independent. The app runs under any UI language, so never identify elements by visible text or English `aria-label` values.
+
+- Prefer, in order: roles, ARIA states/attributes, URL paths/`href`s, SVG `path` prefixes, then DOM structure.
+- Use Facebook's class names only when no stable structural hook exists.
+- Labels may be read as data (for example, conversation names), but never matched by their content.
+- Fallbacks must be language-independent too.
+
 ### Dual Electron runtime constraint
 
 Mainline source must compile and run on both Electron 29 (mac x64 runtime) and Electron 43 (arm64 mac / Windows / Linux). CI enforces the 29 side by re-running tsc against Electron 29's type definitions in the x64 packaging phase. Do not use post-29 APIs without a runtime version guard.
