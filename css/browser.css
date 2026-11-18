@@ -197,8 +197,11 @@ html.sidebar-force-narrow [role='navigation']:has([role='grid']) {
 }
 
 /* -- Toggle message buttons -- */
-/* Only show message action buttons on hover unless enabled globally */
-body:not(.show-message-buttons) [role='article']:not(:hover):not(:focus-within) [role='toolbar'] {
+/* Facebook shows the message action buttons on hover by itself. Hide the
+   leftover toolbar while it is not needed, but keep it visible while one of
+   its menus is open: those menus are portalled outside the article, so the
+   article stops matching :hover and the menu would otherwise close with it. */
+body:not(.show-message-buttons) [role='article']:not(:hover):not(:focus-within):not(:has([aria-expanded='true'])) [role='toolbar'] {
 	display: none;
 }
 
