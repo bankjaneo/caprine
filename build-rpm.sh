@@ -28,8 +28,9 @@ VERSION=$(node -p "require('$PROJECT_DIR/package.json').version")
 
 # rpmbuild rejects a hyphen in Version. A tilde is RPM's pre-release marker and
 # sorts before the final release (2.63.1~beta.0 < 2.63.1). File names keep the
-# raw version so beta and final artifacts never collide.
-RPM_VERSION="${VERSION//-/~}"
+# raw version so beta and final artifacts never collide. sed is used instead of
+# ${VERSION//-/\~} because bash 5 tilde-expands the replacement to $HOME.
+RPM_VERSION=$(printf '%s' "$VERSION" | sed 's/-/~/')
 
 SPEC_FILE="/tmp/caprine.spec"
 

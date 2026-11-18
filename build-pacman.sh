@@ -46,7 +46,7 @@ VERSION=$(node -p "require('$PROJECT_DIR/package.json').version")
 # pkgver rejects a hyphen. An underscore keeps the prerelease sorting before the
 # final release (2.63.1_beta.0 < 2.63.1), matching what electron-builder does for
 # its own pacman target.
-PKGVER="${VERSION//-/_}"
+PKGVER=$(printf '%s' "$VERSION" | sed 's/-/_/')
 
 # Function to build pacman package for a specific architecture
 build_pacman() {
