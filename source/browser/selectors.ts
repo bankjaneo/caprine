@@ -23,8 +23,9 @@ export default {
 		+ '2.422 3.007 2.422 1.49 0 2.731-1.042 '
 		+ '3.005-2.422.06-.3-.193-.575-.505-.575zm-10.064-6.719L22.713 9.02a.997.997 0 00-.124-1.51 '
 		+ '7.792 7.792 0 00-12.308 5.279l-1.04 7.897c-.089.672.726 1.074 1.206.594z"]',
-	// Selector for muted conversation indicator (bell icon without x1k90msu class)
-	mutedConversation: 'svg.x1tzjh5l:not(.x1k90msu)',
+	// Selector for the crossed-bell muted conversation indicator (16×16 icon).
+	// Every icon shares the x1k90msu class, so match the unique bell path instead.
+	mutedConversation: 'svg[viewBox="0 0 16 16"] path[d^="M2.5 6c0-.322"]',
 	// Close button is the only labeled button inside preferences overlay (language-independent)
 	closePreferencesButton: '[role="dialog"] [role="button"][aria-label]',
 	// Legacy user menu selector - no longer used, kept for reference

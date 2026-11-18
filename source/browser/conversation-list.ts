@@ -299,7 +299,7 @@ function countUnread(mutationsList: MutationRecord[]): void {
 			continue;
 		}
 
-		// Skip notifications for muted conversations (exclude from popup/badge/sound)
+		// Skip alerts for muted conversations (no popup/sound). They still count towards the badge.
 		const isMuted = Boolean(current.querySelector(selectors.mutedConversation));
 		if (isMuted) {
 			continue;
@@ -367,13 +367,7 @@ function getUnreadCount(): number {
 			continue;
 		}
 
-		// Skip muted conversations from badge count
-		const isMuted = Boolean(row.querySelector(selectors.mutedConversation));
-
-		if (isMuted) {
-			continue;
-		}
-
+		// Muted conversations still count towards the badge; only their alerts are suppressed.
 		count++;
 	}
 
