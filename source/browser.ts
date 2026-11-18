@@ -352,6 +352,20 @@ async function openSettingsMenuAndClickItem(
 }
 
 ipc.answerMain('show-chats-view', async () => {
+	// Use the existing Chats folder link so Facebook handles the navigation
+	// client-side instead of reloading the whole page.
+	const chatsLink = [...document.querySelectorAll<HTMLAnchorElement>('a[href]')].find(link => {
+		const {pathname} = new URL(link.href);
+		return pathname === '/messages/t/' || pathname === '/messages/t';
+	});
+
+	// The link is off-screen while a settings view such as Message Requests is
+	// open, so fall back to a full navigation to close that view.
+	if (chatsLink && chatsLink.getBoundingClientRect().left >= 0) {
+		chatsLink.click();
+		return;
+	}
+
 	await ipc.callMain('navigate-to-chats');
 });
 
@@ -1232,10 +1246,10 @@ window.addEventListener('load', async () => {
 
 // Toggles styles for inactive window
 window.addEventListener('blur', () => {
-	document.documentElement.classList.add('is-window-inactive');
+	document.documentElement?.classList.add('is-window-inactive');
 });
 window.addEventListener('focus', () => {
-	document.documentElement.classList.remove('is-window-inactive');
+	document.documentElement?.classList.remove('is-window-inactive');
 });
 
 // It's not possible to add multiple accelerators
