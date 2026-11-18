@@ -616,6 +616,7 @@ function createMainWindow(): BrowserWindow {
 	enableHiresResources();
 
 	const {webContents} = mainWindow;
+	let isFirstDomReady = true;
 
 	webContents.on('dom-ready', async () => {
 		// Set window title to Caprine (or with unread count if feature enabled)
@@ -643,15 +644,21 @@ function createMainWindow(): BrowserWindow {
 			webContents.insertCSS(readFileSync(path.join(app.getPath('userData'), 'custom.css'), 'utf8'));
 		}
 
-		if (config.get('launchMinimized') || app.getLoginItemSettings().wasOpenedAsHidden) {
-			mainWindow.hide();
-			tray.create(mainWindow);
-		} else {
-			if (config.get('lastWindowState').isMaximized) {
-				mainWindow.maximize();
-			}
+		// Only show or hide on the initial load. dom-ready also fires on every
+		// navigation, and hiding again there would hide the window on every reload.
+		if (isFirstDomReady) {
+			isFirstDomReady = false;
 
-			mainWindow.show();
+			if (config.get('launchMinimized') || app.getLoginItemSettings().wasOpenedAsHidden) {
+				mainWindow.hide();
+				tray.create(mainWindow);
+			} else {
+				if (config.get('lastWindowState').isMaximized) {
+					mainWindow.maximize();
+				}
+
+				mainWindow.show();
+			}
 		}
 
 		if (is.macos) {
@@ -812,7 +819,7 @@ ipc.answerRenderer('open-external', async (url: string) => {
 });
 
 ipc.answerRenderer('navigate-to-chats', () => {
-	mainWindow.webContents.loadURL('https://www.facebook.com/messages/');
+	mainWindow.webContents.loadURL('https://www.facebook.com/messages/t/');
 });
 
 // Filesystems cap names at 255 bytes, so truncate by code point to never split a
