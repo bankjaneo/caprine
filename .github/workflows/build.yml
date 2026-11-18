@@ -67,9 +67,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install Snapcraft
-        if: startsWith(matrix.os, 'ubuntu')
-        run: sudo snap install snapcraft --classic
       - name: Package Caprine for macOS (arm64)
         if: startsWith(matrix.os, 'macos')
         run: |
@@ -122,7 +119,6 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         run: npm run dist:linux -- --publish never
         env:
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.snapcraft_token }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Linux artifacts to GitHub Release
         if: startsWith(matrix.os, 'ubuntu')
