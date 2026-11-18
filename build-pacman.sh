@@ -43,6 +43,11 @@ PROJECT_DIR="$SCRIPT_DIR"
 
 VERSION=$(node -p "require('$PROJECT_DIR/package.json').version")
 
+# pkgver rejects a hyphen. An underscore keeps the prerelease sorting before the
+# final release (2.63.1_beta.0 < 2.63.1), matching what electron-builder does for
+# its own pacman target.
+PKGVER="${VERSION//-/_}"
+
 # Function to build pacman package for a specific architecture
 build_pacman() {
 	local ARCH=$1
@@ -87,16 +92,16 @@ build_pacman() {
 	cp "$PROJECT_DIR/packages/pacman/PKGBUILD" "$BUILD_DIR/"
 
 	# Update PKGBUILD with version
-	sed -i "s/^pkgver=.*/pkgver=\"${VERSION}\"/" "$BUILD_DIR/PKGBUILD"
+	sed -i "s/^pkgver=.*/pkgver=\"${PKGVER}\"/" "$BUILD_DIR/PKGBUILD"
 
 	# Copy only required files to source directory
-	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/dist"
-	cp -a "$DIST_DIR" "$BUILD_DIR/src/caprine-${VERSION}/dist/"
-	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/build"
-	cp -a "$PROJECT_DIR/build/icons" "$BUILD_DIR/src/caprine-${VERSION}/build/"
-	cp -a "$PROJECT_DIR/license" "$BUILD_DIR/src/caprine-${VERSION}/"
-	mkdir -p "$BUILD_DIR/src/caprine-${VERSION}/packages/pacman"
-	cp -a "$PROJECT_DIR/packages/pacman/caprine.desktop" "$BUILD_DIR/src/caprine-${VERSION}/packages/pacman/"
+	mkdir -p "$BUILD_DIR/src/caprine-${PKGVER}/dist"
+	cp -a "$DIST_DIR" "$BUILD_DIR/src/caprine-${PKGVER}/dist/"
+	mkdir -p "$BUILD_DIR/src/caprine-${PKGVER}/build"
+	cp -a "$PROJECT_DIR/build/icons" "$BUILD_DIR/src/caprine-${PKGVER}/build/"
+	cp -a "$PROJECT_DIR/license" "$BUILD_DIR/src/caprine-${PKGVER}/"
+	mkdir -p "$BUILD_DIR/src/caprine-${PKGVER}/packages/pacman"
+	cp -a "$PROJECT_DIR/packages/pacman/caprine.desktop" "$BUILD_DIR/src/caprine-${PKGVER}/packages/pacman/"
 
 	# Build package
 	cd "$BUILD_DIR"
@@ -113,7 +118,7 @@ build_pacman() {
 	rm -rf "$BUILD_DIR"
 	trap - EXIT
 
-	echo "✓ Built: caprine-${VERSION}-${ARCH}.pkg.tar.zst"
+	echo "✓ Built: caprine-${PKGVER}-${ARCH}.pkg.tar.zst"
 }
 
 # Build pacman package(s) for specified architecture/ies

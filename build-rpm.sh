@@ -25,6 +25,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 
 VERSION=$(node -p "require('$PROJECT_DIR/package.json').version")
+
+# rpmbuild rejects a hyphen in Version. A tilde is RPM's pre-release marker and
+# sorts before the final release (2.63.1~beta.0 < 2.63.1). File names keep the
+# raw version so beta and final artifacts never collide.
+RPM_VERSION="${VERSION//-/~}"
+
 SPEC_FILE="/tmp/caprine.spec"
 
 # Function to build RPM for a specific architecture
@@ -64,7 +70,7 @@ build_rpm() {
 
 	cat > "$SPEC_FILE" << EOF
 Name:           caprine
-Version:        $VERSION
+Version:        $RPM_VERSION
 Release:        1%{?dist}
 Summary:        Elegant Facebook Messenger desktop app
 License:        MIT
@@ -138,7 +144,7 @@ DESKTOP_EOF
 /usr/share/applications/caprine.desktop
 
 %changelog
-* $(date +'%a %b %d %Y') Builder <auto@example.com> - $VERSION-1
+* $(date +'%a %b %d %Y') Builder <auto@example.com> - $RPM_VERSION-1
 - Initial package build
 EOF
 
