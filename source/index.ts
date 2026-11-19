@@ -37,7 +37,7 @@ import {process as processEmojiUrl} from './emoji';
 import ensureOnline from './ensure-online';
 import {setUpMenuBarMode} from './menu-bar-mode';
 import {caprineIconPath} from './constants';
-import updater from './updater';
+import {getUpdater} from './updater';
 
 ipc.setMaxListeners(100);
 
@@ -70,6 +70,7 @@ if (!config.get('hardwareAcceleration')) {
 
 if (!is.development && config.get('autoUpdate')) {
 	(async () => {
+		const updater = getUpdater();
 		const FOUR_HOURS = 1000 * 60 * 60 * 4;
 		setInterval(async () => {
 			await updater.checkForUpdatesAndNotify();

@@ -30,6 +30,9 @@ node_modules/.bin/electron-builder --linux dir
 install -d %{buildroot}%{_libdir}/%{name}
 cp -r dist/linux-unpacked/* %{buildroot}%{_libdir}/%{name}
 
+# electron-builder --linux dir does not write a package-type.
+printf 'rpm' > %{buildroot}%{_libdir}/%{name}/resources/package-type
+
 install -d %{buildroot}%{_bindir}
 ln -sf %{_libdir}/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
 
