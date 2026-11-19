@@ -69,7 +69,7 @@ if (!config.get('hardwareAcceleration')) {
 }
 
 if (!is.development && config.get('autoUpdate')) {
-	(async () => {
+	app.whenReady().then(async () => {
 		const updater = getUpdater();
 		const FOUR_HOURS = 1000 * 60 * 60 * 4;
 		setInterval(async () => {
@@ -77,7 +77,7 @@ if (!is.development && config.get('autoUpdate')) {
 		}, FOUR_HOURS);
 
 		await updater.checkForUpdatesAndNotify();
-	})();
+	});
 }
 
 let mainWindow: BrowserWindow;

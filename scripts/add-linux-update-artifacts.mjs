@@ -32,9 +32,10 @@ const artifacts = distFiles.flatMap(file => {
 		return [];
 	}
 
-	// Pacman replaces the SemVer prerelease hyphen with an underscore.
-	const artifactVersion = match.groups.version.replaceAll('_', '-');
-	if (artifactVersion !== version) {
+	// Pacman replaces the SemVer prerelease hyphen with an underscore. Compare
+	// the raw name first so a non-SemVer version containing "_" still matches.
+	const artifactVersion = match.groups.version;
+	if (artifactVersion !== version && artifactVersion.replaceAll('_', '-') !== version) {
 		return [];
 	}
 

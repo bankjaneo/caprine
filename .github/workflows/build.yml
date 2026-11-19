@@ -122,7 +122,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload Linux artifacts to GitHub Release
         if: startsWith(matrix.os, 'ubuntu')
-        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb --clobber --repo "${{ github.repository }}"
+        run: gh release upload "${{ github.ref_name }}" dist/*.AppImage dist/*.deb dist/latest*.yml --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build RPM packages (x86_64 and arm64)
