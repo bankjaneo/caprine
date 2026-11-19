@@ -16,7 +16,6 @@ import {
 	nativeTheme,
 } from 'electron';
 import {ipcMain as ipc} from 'electron-better-ipc';
-import {autoUpdater} from 'electron-updater';
 import electronDl from 'electron-dl';
 import electronContextMenu from 'electron-context-menu';
 import electronLocalshortcut from 'electron-localshortcut';
@@ -38,6 +37,7 @@ import {process as processEmojiUrl} from './emoji';
 import ensureOnline from './ensure-online';
 import {setUpMenuBarMode} from './menu-bar-mode';
 import {caprineIconPath} from './constants';
+import updater from './updater';
 
 ipc.setMaxListeners(100);
 
@@ -72,10 +72,10 @@ if (!is.development && config.get('autoUpdate')) {
 	(async () => {
 		const FOUR_HOURS = 1000 * 60 * 60 * 4;
 		setInterval(async () => {
-			await autoUpdater.checkForUpdatesAndNotify();
+			await updater.checkForUpdatesAndNotify();
 		}, FOUR_HOURS);
 
-		await autoUpdater.checkForUpdatesAndNotify();
+		await updater.checkForUpdatesAndNotify();
 	})();
 }
 

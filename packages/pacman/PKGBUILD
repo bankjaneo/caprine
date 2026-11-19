@@ -21,6 +21,10 @@ package() {
     # Install app to /usr/lib/caprine
     install -d "$pkgdir/usr/lib/caprine"
     cp -a "dist/$dist_dir/." "$pkgdir/usr/lib/caprine/"
+
+    # linux-unpacked is produced by the deb target, which stamps it as "deb".
+    # Override it so electron-updater selects PacmanUpdater on pacman installs.
+    printf 'pacman' > "$pkgdir/usr/lib/caprine/resources/package-type"
     
     # Install icons
     install -Dm644 build/icons/16x16.png "$pkgdir/usr/share/icons/hicolor/16x16/apps/caprine.png"

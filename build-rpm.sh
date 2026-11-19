@@ -103,6 +103,10 @@ Caprine is an unofficial and privacy focused Facebook Messenger desktop app.
 mkdir -p %{buildroot}/opt/Caprine
 cp -r "$DIST_DIR"/* %{buildroot}/opt/Caprine/
 
+# linux-unpacked is produced by the deb target, which stamps it as "deb".
+# Override it so electron-updater selects RpmUpdater on RPM installs.
+printf 'rpm' > %{buildroot}/opt/Caprine/resources/package-type
+
 mkdir -p %{buildroot}/usr/share/icons/hicolor/16x16/apps
 install -m 644 "$PROJECT_DIR"/build/icons/16x16.png %{buildroot}/usr/share/icons/hicolor/16x16/apps/caprine.png
 

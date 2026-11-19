@@ -155,6 +155,14 @@ jobs:
         run: gh release upload "${{ github.ref_name }}" dist/*.pkg.tar.zst --clobber --repo "${{ github.repository }}"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add RPM and pacman packages to Linux update metadata
+        if: startsWith(matrix.os, 'ubuntu')
+        run: node scripts/add-linux-update-artifacts.mjs
+      - name: Upload Linux update metadata
+        if: startsWith(matrix.os, 'ubuntu')
+        run: gh release upload "${{ github.ref_name }}" dist/latest-linux.yml dist/latest-linux-arm64.yml --clobber --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Upload x64 deb to Gemfury
         if: startsWith(matrix.os, 'ubuntu') && steps.release_type.outputs.is_prerelease == 'false'
         run: |
