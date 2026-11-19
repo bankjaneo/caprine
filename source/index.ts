@@ -69,14 +69,17 @@ if (!config.get('hardwareAcceleration')) {
 }
 
 if (!is.development && config.get('autoUpdate')) {
-	app.whenReady().then(async () => {
-		const updater = getUpdater();
-		const FOUR_HOURS = 1000 * 60 * 60 * 4;
-		setInterval(async () => {
-			await updater.checkForUpdatesAndNotify();
-		}, FOUR_HOURS);
+	app.whenReady().then(() => {
+		// Let the window-creation continuation run before the ownership probes.
+		setImmediate(async () => {
+			const updater = getUpdater();
+			const FOUR_HOURS = 1000 * 60 * 60 * 4;
+			setInterval(async () => {
+				await updater.checkForUpdatesAndNotify();
+			}, FOUR_HOURS);
 
-		await updater.checkForUpdatesAndNotify();
+			await updater.checkForUpdatesAndNotify();
+		});
 	});
 }
 
