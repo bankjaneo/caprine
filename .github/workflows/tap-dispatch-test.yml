@@ -1,0 +1,19 @@
+name: Test tap dispatch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch caprine-release to homebrew-tap
+        run: |
+          gh api --include repos/bankjaneo/homebrew-tap/dispatches \
+            -f event_type=caprine-release \
+            -f "client_payload[version]=dispatch-test"
+        env:
+          GH_TOKEN: ${{ secrets.TAP_DISPATCH_TOKEN }}
