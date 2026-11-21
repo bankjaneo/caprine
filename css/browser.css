@@ -197,11 +197,19 @@ html.sidebar-force-narrow [role='navigation']:has([role='grid']) {
 }
 
 /* -- Toggle message buttons -- */
-/* Facebook shows the message action buttons on hover by itself. Hide the
-   leftover toolbar while it is not needed, but keep it visible while one of
-   its menus is open: those menus are portalled outside the article, so the
+/* Facebook only mounts the message action buttons while the article is
+   hovered, but always reserves their gutter. Keep the toolbar in the layout
+   and hide it with visibility so the bubble does not reflow wider and snap
+   back under the cursor on every hover. Keep it visible while one of its
+   menus is open: those menus are portalled outside the article, so the
    article stops matching :hover and the menu would otherwise close with it. */
 body:not(.show-message-buttons) [role='article']:not(:hover):not(:focus-within):not(:has([aria-expanded='true'])) [role='toolbar'] {
+	display: flex;
+	visibility: hidden;
+}
+
+/* "Show Message Buttons" off: drop the hover buttons and their gutter */
+body.show-message-buttons [role='article'] [role='toolbar'] {
 	display: none;
 }
 
