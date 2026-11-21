@@ -53,8 +53,10 @@ body {
 	display: none !important;
 }
 
-/* Hide Facebook top navigation bar (not present on messenger.com) */
-[role='banner'] {
+/* Hide Facebook top navigation bar (not present on messenger.com). The login
+   page also marks its illustration panel as role=banner, so only hide banners
+   that actually contain the nav. */
+[role='banner']:has([role='navigation']) {
 	display: none !important;
 }
 
