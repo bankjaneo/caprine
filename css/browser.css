@@ -121,6 +121,22 @@ body::-webkit-scrollbar {
 	display: none;
 }
 
+/* -- Chat themes -- */
+/* Facebook resets --mwp-message-row-background on mode wrappers inside the
+   message list, which paints opaque bands over image themes (visible around
+   timestamps and message rows). Detect themed chats by their inline theme
+   variables/background image and keep the row background transparent so the
+   wallpaper shows through. */
+[style*='--chat-scrollbar-track-color'],
+[style*='background-image: url('] {
+	--mwp-message-row-background: transparent !important;
+}
+
+[style*='--chat-scrollbar-track-color'] :is(.__fb-light-mode, .__fb-dark-mode),
+[style*='background-image: url('] :is(.__fb-light-mode, .__fb-dark-mode) {
+	--mwp-message-row-background: transparent !important;
+}
+
 /* A utility class for temporarily hiding all dropdown menus */
 html.hide-dropdowns [role='menu'] {
 	visibility: hidden !important;
