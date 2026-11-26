@@ -450,7 +450,12 @@ async function observeTheme(): Promise<void> {
 				const element = newNode as HTMLElement;
 				const {classList} = element;
 				const isLight = classList.contains('light-mode') || classList.contains('__fb-light-mode');
-				if (nativeTheme.shouldUseDarkColors === isLight) {
+				const isDark = classList.contains('dark-mode') || classList.contains('__fb-dark-mode');
+				// Only convert nodes that explicitly declare the opposite mode. Neutral
+				// nodes inherit the theme; tagging them with a mode class makes Facebook's
+				// mode-scoped variables override values inherited from the themed
+				// conversation (for example, custom chat bubble colors).
+				if (nativeTheme.shouldUseDarkColors ? isLight : isDark) {
 					setThemeElement(element);
 				}
 			}
